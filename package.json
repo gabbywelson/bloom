@@ -4,12 +4,14 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+    "@effect/tsgo": "^0.48.0",
+    "@types/bun": "latest",
+    "typescript": "^7"
   },
   "dependencies": {
     "effect": "^4.0.0"
+  },
+  "scripts": {
+    "prepare": "effect-tsgo patch"
   }
 }

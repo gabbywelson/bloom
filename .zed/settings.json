@@ -1,0 +1,22 @@
+// Project settings for Zed: https://zed.dev/docs/configuring-zed#settings-files
+{
+  // Run the Effect-patched native TypeScript (tsgo) LSP in place of vtsls,
+  // so Effect language-service diagnostics show in the editor.
+  // `bun install` patches this binary via the `prepare` script.
+  "lsp": {
+    "vtsls": {
+      "binary": {
+        "path": "node_modules/.bin/tsc",
+        "arguments": ["--lsp", "--stdio"]
+      }
+    }
+  },
+  "languages": {
+    "TypeScript": {
+      "language_servers": ["vtsls", "!typescript-language-server", "..."]
+    },
+    "TSX": {
+      "language_servers": ["vtsls", "!typescript-language-server", "..."]
+    }
+  }
+}
