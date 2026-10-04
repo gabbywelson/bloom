@@ -1,0 +1,24 @@
+trying to set up the Effect devtools per https://effect.website/docs/v4/getting-started/devtools
+
+Seeing this:
+
+```
+
+
+<pasted_content id="706e">
+❯ bun install
+bun install v1.3.14 (0d9b296a)
+
+$ effect-tsgo patch
+[16:49:41.140] ERROR (#1): DiscoveryError: Unable to discover an installed typescript binary.
+    at /Users/welson/code/bloom/node_modules/@effect/tsgo/dist/effect-tsgo.cjs:54214:116
+error: prepare script from "bloom" exited with 1
+</pasted_content id="706e">
+
+```
+
+Do I need to explicitly install typescript? I thought bun handled that
+
+---
+
+is there a way to do that for my editor though some project settings file? I'm using zed
