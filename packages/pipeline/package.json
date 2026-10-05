@@ -1,0 +1,20 @@
+{
+  "name": "@bloom/pipeline",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Event pipeline: ingestion (idempotent via dedupe_key), triage, interruption policy, nudge composition and delivery. Scheduled job definitions live here.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test --pass-with-no-tests"
+  },
+  "dependencies": {
+    "@bloom/db": "workspace:*",
+    "@bloom/domain": "workspace:*",
+    "effect": "4.0.0"
+  }
+}

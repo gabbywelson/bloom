@@ -1,0 +1,20 @@
+{
+  "name": "@bloom/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Bloom HttpApi contract (effect/http-api). Shared by the server, the web client, and OpenAPI emission.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test --pass-with-no-tests",
+    "openapi": "bun run scripts/emit-openapi.ts"
+  },
+  "dependencies": {
+    "@bloom/domain": "workspace:*",
+    "effect": "4.0.0"
+  }
+}

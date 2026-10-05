@@ -1,0 +1,22 @@
+# Git hooks. Installed by `bun install` (prepare script) via `lefthook install`.
+pre-commit:
+  parallel: true
+  jobs:
+    - name: oxlint
+      glob: "*.{ts,js,svelte}"
+      exclude:
+        - "repos/**"
+      run: bunx oxlint {staged_files}
+    - name: oxfmt
+      glob: "*.{ts,js,svelte,json,jsonc,md,yml,yaml,css}"
+      exclude:
+        - "repos/**"
+        - "bun.lock"
+      run: bunx oxfmt --check {staged_files}
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: bun run typecheck
+    - name: test
+      run: bun run test

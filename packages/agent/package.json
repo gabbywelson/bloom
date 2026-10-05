@@ -1,0 +1,22 @@
+{
+  "name": "@bloom/agent",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Agent runtime: ModelProvider service and providers, routing table, context assembly (SOUL.md + history), tools, and the run loop.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test --pass-with-no-tests"
+  },
+  "dependencies": {
+    "@bloom/domain": "workspace:*",
+    "@effect/ai-anthropic": "4.0.0",
+    "@effect/ai-openai": "4.0.0",
+    "@effect/platform-bun": "4.0.0",
+    "effect": "4.0.0"
+  }
+}

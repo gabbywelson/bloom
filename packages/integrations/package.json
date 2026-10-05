@@ -1,0 +1,19 @@
+{
+  "name": "@bloom/integrations",
+  "version": "0.0.0",
+  "private": true,
+  "description": "One module per external source. Each exposes tools and emits Events through interfaces defined in @bloom/domain. Never imports @bloom/agent.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test --pass-with-no-tests"
+  },
+  "dependencies": {
+    "@bloom/domain": "workspace:*",
+    "effect": "4.0.0"
+  }
+}

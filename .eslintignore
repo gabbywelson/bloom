@@ -1,3 +1,6 @@
 # oxlint reads this by default (--ignore-path). Needed so it does not pick up
 # nested .oxlintrc.json files inside vendored repos/ (e.g. repos/effect).
 repos/
+.svelte-kit/
+build/
+dist/

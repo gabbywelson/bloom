@@ -10,19 +10,19 @@ Clients talk only to the API. Integrations feed events into the pipeline, which 
 
 The stack is TypeScript end to end on the server, Svelte on the web, and Swift on Apple devices, with Postgres as the single source of truth.
 
-| Layer | Choice | Why |
-| --- | --- | --- |
-| Runtime | Bun **(decided)** | Comfort zone, fast, good for agent tooling |
-| Core framework | Effect **(decided, pending a spike)** | Typed errors, retry schedules, Layers for swappable models and sources, built-in OpenTelemetry |
-| HTTP / RPC | `@effect/platform` HttpApi | One typed API definition generates server handlers, a TS client, and an OpenAPI spec for Swift |
-| Database | Postgres on PlanetScale | Already paid for; good UI. Drizzle or Effect SQL for queries |
-| Job queue | pg-boss (Postgres-backed) | No Redis. Schedules, retries, and singleton jobs for nudges and ingestion |
-| Web client | SvelteKit (Svelte 5 runes) | Fun is allowed. Wire in Svelte's LLM docs and MCP server to keep agents on runes syntax |
-| Apple clients | SwiftUI **(decided)** | Required for HealthKit, share sheet, Lock Screen capture, App Intents, widgets |
-| Auth | Better Auth with passkeys | Single user; also issues tokens for the iOS app later |
-| Inference | Provider-agnostic model layer | Sign in with ChatGPT for conversation; API key fallback; Jev for triage decisions |
-| Observability | OpenTelemetry → Langfuse (self-hosted) + a trace backend | Replay exactly why Bloom said or did something |
-| Hosting | Backend on the home Linux server via Tailscale; Railway as the cloud option | Long-running workers don't fit Vercel or Workers |
+| Layer          | Choice                                                                      | Why                                                                                            |
+| -------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Runtime        | Bun **(decided)**                                                           | Comfort zone, fast, good for agent tooling                                                     |
+| Core framework | Effect **(decided, pending a spike)**                                       | Typed errors, retry schedules, Layers for swappable models and sources, built-in OpenTelemetry |
+| HTTP / RPC     | `@effect/platform` HttpApi                                                  | One typed API definition generates server handlers, a TS client, and an OpenAPI spec for Swift |
+| Database       | Postgres on PlanetScale                                                     | Already paid for; good UI. Drizzle or Effect SQL for queries                                   |
+| Job queue      | pg-boss (Postgres-backed)                                                   | No Redis. Schedules, retries, and singleton jobs for nudges and ingestion                      |
+| Web client     | SvelteKit (Svelte 5 runes)                                                  | Fun is allowed. Wire in Svelte's LLM docs and MCP server to keep agents on runes syntax        |
+| Apple clients  | SwiftUI **(decided)**                                                       | Required for HealthKit, share sheet, Lock Screen capture, App Intents, widgets                 |
+| Auth           | Better Auth with passkeys                                                   | Single user; also issues tokens for the iOS app later                                          |
+| Inference      | Provider-agnostic model layer                                               | Sign in with ChatGPT for conversation; API key fallback; Jev for triage decisions              |
+| Observability  | OpenTelemetry → Langfuse (self-hosted) + a trace backend                    | Replay exactly why Bloom said or did something                                                 |
+| Hosting        | Backend on the home Linux server via Tailscale; Railway as the cloud option | Long-running workers don't fit Vercel or Workers                                               |
 
 **Effect spike before committing.** Spend one session building the model-provider Layer and one pg-boss job in Effect. If it feels like fighting the framework, fall back to plain TS with `neverthrow` and keep the same module boundaries.
 
@@ -57,20 +57,20 @@ Rules: `apps/*` depend on `packages/*`, never the reverse. `integrations/*` neve
 
 The agent operates over structured domain objects, not chat transcripts. Chat is one input among many. Get this layer right first; everything else hangs off it.
 
-| Entity | What it is | Key fields |
-| --- | --- | --- |
-| `Task` | A thing to do once | title, notes, status, due, scheduled\_for, effort (spoons), energy\_kind, area, source, parent\_id |
-| `Routine` | A recurring task or self-care habit | recurrence rule, flexibility window, last\_done, streak policy (forgiving by default) |
-| `Chore` | Household routine with a cadence | cadence, last\_done, owner, rough effort |
-| `Area` | Life domain grouping | name (Home, Health, Money, Projects, Self) |
-| `Capture` | Raw input before triage | kind (text, voice, share, image), payload, transcript, status (new, routed, dismissed), routed\_to |
-| `Item` | A saved link after triage | kind (article, product, recipe, idea), url, title, why\_saved, destination (reader, considering, project), decay\_at |
-| `Thread` | A conversation | kind (main, side, quest), parent\_thread\_id, topic, context\_scope, status |
-| `Message` | One turn in a thread | role, content parts (text, image, ui\_component), tool calls |
-| `Event` | Anything that happened that Bloom might care about | source, type, occurred\_at, payload, dedupe\_key |
-| `Nudge` | A proactive message Bloom decided to send | trigger\_event\_id, reasoning, channel, actions, sent\_at, outcome (done, snoozed, dismissed, ignored) |
-| `Memory` | Durable facts about Gabby | statement, source, confidence, sensitivity tier, last\_confirmed |
-| `CheckIn` | Energy and mood snapshot | spoons available, note, at |
+| Entity    | What it is                                         | Key fields                                                                                                           |
+| --------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `Task`    | A thing to do once                                 | title, notes, status, due, scheduled\_for, effort (spoons), energy\_kind, area, source, parent\_id                   |
+| `Routine` | A recurring task or self-care habit                | recurrence rule, flexibility window, last\_done, streak policy (forgiving by default)                                |
+| `Chore`   | Household routine with a cadence                   | cadence, last\_done, owner, rough effort                                                                             |
+| `Area`    | Life domain grouping                               | name (Home, Health, Money, Projects, Self)                                                                           |
+| `Capture` | Raw input before triage                            | kind (text, voice, share, image), payload, transcript, status (new, routed, dismissed), routed\_to                   |
+| `Item`    | A saved link after triage                          | kind (article, product, recipe, idea), url, title, why\_saved, destination (reader, considering, project), decay\_at |
+| `Thread`  | A conversation                                     | kind (main, side, quest), parent\_thread\_id, topic, context\_scope, status                                          |
+| `Message` | One turn in a thread                               | role, content parts (text, image, ui\_component), tool calls                                                         |
+| `Event`   | Anything that happened that Bloom might care about | source, type, occurred\_at, payload, dedupe\_key                                                                     |
+| `Nudge`   | A proactive message Bloom decided to send          | trigger\_event\_id, reasoning, channel, actions, sent\_at, outcome (done, snoozed, dismissed, ignored)               |
+| `Memory`  | Durable facts about Gabby                          | statement, source, confidence, sensitivity tier, last\_confirmed                                                     |
+| `CheckIn` | Energy and mood snapshot                           | spoons available, note, at                                                                                           |
 
 **Design rules**
 
@@ -140,21 +140,21 @@ Proactivity is the product, so the event pipeline is a first-class subsystem, no
 
 Each integration has two halves: **tools** (on-demand reads and writes during a run) and **ingestion** (events that feed proactivity). Many only need one half to start.
 
-| Source | Tools | Ingestion | Notes | Phase |
-| --- | --- | --- | --- | --- |
-| Google Calendar | Read day or week, create or move events | Watch channels → `Event` | Needed for the "today" snapshot | 2 |
-| Gmail | Search, read thread, draft reply | Push notifications via Pub/Sub | Drafts only; never auto-send | 2 |
-| Things (one-time) | — | Import script | Migrate tasks, then retire Things | 1 |
-| Apple Health | — | iOS app reads HealthKit and syncs summaries | Phone-only data; requires the Swift shell | 3 |
-| Obsidian | Search and read notes, append to daily note | Vault synced to the server (Syncthing or git), diffed for changes | Index with embeddings; pgvector if available | 4 |
-| Granola | Query meeting notes | Poll if the API allows | Therapy notes are `restricted`: opt-in per query only | 4 |
-| Share sheet and links | — | Captures from iOS or the web | Fetch and extract server-side | 3–4 |
-| Readwise Reader | Save, tag, move, archive | Optional periodic sync | Reader stays the reading surface; Bloom triages in front | 4 |
-| SimpleFIN Bridge | Query transactions and balances | Daily poll | Purchase nudges; feeds the considering list | 5 |
-| Linear | Create issues with context | — | Project idea capture | 4 |
-| Claude Code / T3 Code | Launch a headless session on a repo | Completion callback | Always behind explicit confirmation | 6 |
-| Web search | Search and fetch | — | For side threads and curiosity mode | 4 |
-| Home Assistant | Device state and actions | State-change events | Later | 7 |
+| Source                | Tools                                       | Ingestion                                                         | Notes                                                    | Phase |
+| --------------------- | ------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------- | ----- |
+| Google Calendar       | Read day or week, create or move events     | Watch channels → `Event`                                          | Needed for the "today" snapshot                          | 2     |
+| Gmail                 | Search, read thread, draft reply            | Push notifications via Pub/Sub                                    | Drafts only; never auto-send                             | 2     |
+| Things (one-time)     | —                                           | Import script                                                     | Migrate tasks, then retire Things                        | 1     |
+| Apple Health          | —                                           | iOS app reads HealthKit and syncs summaries                       | Phone-only data; requires the Swift shell                | 3     |
+| Obsidian              | Search and read notes, append to daily note | Vault synced to the server (Syncthing or git), diffed for changes | Index with embeddings; pgvector if available             | 4     |
+| Granola               | Query meeting notes                         | Poll if the API allows                                            | Therapy notes are `restricted`: opt-in per query only    | 4     |
+| Share sheet and links | —                                           | Captures from iOS or the web                                      | Fetch and extract server-side                            | 3–4   |
+| Readwise Reader       | Save, tag, move, archive                    | Optional periodic sync                                            | Reader stays the reading surface; Bloom triages in front | 4     |
+| SimpleFIN Bridge      | Query transactions and balances             | Daily poll                                                        | Purchase nudges; feeds the considering list              | 5     |
+| Linear                | Create issues with context                  | —                                                                 | Project idea capture                                     | 4     |
+| Claude Code / T3 Code | Launch a headless session on a repo         | Completion callback                                               | Always behind explicit confirmation                      | 6     |
+| Web search            | Search and fetch                            | —                                                                 | For side threads and curiosity mode                      | 4     |
+| Home Assistant        | Device state and actions                    | State-change events                                               | Later                                                    | 7     |
 
 Default to official MCP servers for tools where they exist; write direct API clients for ingestion, since MCP doesn't cover webhooks or polling.
 

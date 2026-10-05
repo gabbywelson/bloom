@@ -1,0 +1,23 @@
+{
+  "name": "@bloom/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Postgres schema, migrations, repositories and domain service implementations (effect/sql + @effect/sql-pg).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test --pass-with-no-tests",
+    "migrate": "bun run scripts/migrate.ts",
+    "seed": "bun run scripts/seed.ts"
+  },
+  "dependencies": {
+    "@bloom/domain": "workspace:*",
+    "@effect/platform-bun": "4.0.0",
+    "@effect/sql-pg": "4.0.0",
+    "effect": "4.0.0"
+  }
+}

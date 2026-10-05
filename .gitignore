@@ -32,3 +32,15 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# SvelteKit
+.svelte-kit
+build
+
+# Playwright
+apps/web/test-results
+apps/web/playwright-report
+
+# Local secrets / tool state
+.env.local
+.lefthook-local.yml

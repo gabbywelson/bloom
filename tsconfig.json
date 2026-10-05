@@ -1,40 +1,15 @@
 {
-  "compilerOptions": {
-    // Environment setup & latest features
-    "lib": ["ESNext"],
-    "target": "ESNext",
-    "module": "Preserve",
-    "moduleDetection": "force",
-    "jsx": "react-jsx",
-    "allowJs": true,
-    "types": ["bun"],
-
-    // Bundler mode
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "noEmit": true,
-
-    // Best practices
-    "strict": true,
-    "skipLibCheck": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-
-    // Some stricter flags (disabled by default)
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false,
-
-    // Effect tsgo tooling
-    "plugins": [
-      {
-        "name": "@effect/language-service",
-        "diagnostics": false
-      }
-    ]
-  },
+  // Editor + whole-repo typecheck for every Effect/TS workspace. apps/web is
+  // a SvelteKit project and is checked separately with svelte-check.
+  "extends": "./tsconfig.base.json",
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/test/**/*.ts",
+    "packages/*/scripts/**/*.ts",
+    "packages/db/migrations/**/*.ts",
+    "apps/server/src/**/*.ts",
+    "apps/server/test/**/*.ts"
+  ],
   // repos/ holds vendored reference sources (git subtrees) for coding agents
-  "exclude": ["node_modules", "repos"]
+  "exclude": ["node_modules", "repos", "apps/web"]
 }

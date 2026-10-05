@@ -1,0 +1,185 @@
+# Local infrastructure for Bloom.
+#
+#   bun run infra:up      # start everything
+#   bun run infra:down    # stop (keeps volumes)
+#   bun run infra:reset   # stop and wipe volumes
+#
+# Ports on the host:
+#   5432   Postgres (databases: bloom, langfuse)
+#   3200   Langfuse UI  (login: dev@bloom.local / bloom-dev-password)
+#   16686  Jaeger UI (all traces)
+#   4317   OTel collector gRPC
+#   4318   OTel collector HTTP   <- the Bloom server exports here
+#   9090   MinIO (Langfuse blob storage)
+#
+# Every credential below is a local-development default for throwaway
+# containers. Override via environment variables if this ever leaves localhost.
+services:
+  postgres:
+    image: docker.io/postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - 127.0.0.1:5432:5432
+    volumes:
+      - bloom_postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bloom"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # --- Tracing --------------------------------------------------------------
+  otel-collector:
+    image: docker.io/otel/opentelemetry-collector-contrib:0.161.0
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yaml"]
+    environment:
+      # base64("pk-lf-bloom-dev:sk-lf-bloom-dev") -- matches LANGFUSE_INIT_* below
+      LANGFUSE_OTLP_BASIC_AUTH: cGstbGYtYmxvb20tZGV2OnNrLWxmLWJsb29tLWRldg==
+    volumes:
+      - ./docker/otel-collector/config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - 127.0.0.1:4317:4317
+      - 127.0.0.1:4318:4318
+    depends_on:
+      jaeger:
+        condition: service_started
+
+  jaeger:
+    image: docker.io/jaegertracing/jaeger:2.21.0
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:16686:16686
+
+  # --- Langfuse (self-hosted v4) ---------------------------------------------
+  langfuse-worker:
+    image: docker.langfuse.com/langfuse/langfuse-worker:4
+    restart: unless-stopped
+    depends_on: &langfuse-depends-on
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    environment: &langfuse-worker-env
+      NEXTAUTH_URL: http://localhost:3200
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/langfuse
+      SALT: bloom-dev-salt
+      ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+      TELEMETRY_ENABLED: "false"
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "false"
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: minio
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: miniosecret
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+      LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+      LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: minio
+      LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: miniosecret
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://minio:9000
+      LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_AUTH: bloom-dev-redis
+      REDIS_TLS_ENABLED: "false"
+
+  langfuse-web:
+    image: docker.langfuse.com/langfuse/langfuse:4
+    restart: unless-stopped
+    depends_on: *langfuse-depends-on
+    ports:
+      - 127.0.0.1:3200:3000
+    environment:
+      <<: *langfuse-worker-env
+      NEXTAUTH_SECRET: bloom-dev-nextauth-secret
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://localhost:9090
+      LANGFUSE_S3_MEDIA_UPLOAD_INTERNAL_ENDPOINT: http://minio:9000
+      # Headless init: org, project, API keys and a login so the collector can
+      # export on first boot. Keys must start with pk-lf- / sk-lf-.
+      LANGFUSE_INIT_ORG_ID: bloom
+      LANGFUSE_INIT_ORG_NAME: Bloom
+      LANGFUSE_INIT_PROJECT_ID: bloom-dev
+      LANGFUSE_INIT_PROJECT_NAME: Bloom (dev)
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: pk-lf-bloom-dev
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: sk-lf-bloom-dev
+      LANGFUSE_INIT_USER_EMAIL: dev@bloom.local
+      LANGFUSE_INIT_USER_NAME: Bloom Dev
+      LANGFUSE_INIT_USER_PASSWORD: bloom-dev-password
+
+  clickhouse:
+    image: docker.io/clickhouse/clickhouse-server:25.12
+    restart: unless-stopped
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse
+    volumes:
+      - bloom_clickhouse_data:/var/lib/clickhouse
+      - bloom_clickhouse_logs:/var/log/clickhouse-server
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 1s
+
+  minio:
+    image: cgr.dev/chainguard/minio
+    restart: unless-stopped
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: miniosecret
+    ports:
+      - 127.0.0.1:9090:9000
+      - 127.0.0.1:9091:9001
+    volumes:
+      - bloom_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+      start_period: 1s
+
+  redis:
+    image: docker.io/redis:7
+    restart: unless-stopped
+    command: >
+      --requirepass bloom-dev-redis
+      --maxmemory-policy noeviction
+    volumes:
+      - bloom_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  bloom_postgres_data:
+  bloom_clickhouse_data:
+  bloom_clickhouse_logs:
+  bloom_minio_data:
+  bloom_redis_data:

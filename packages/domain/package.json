@@ -1,0 +1,18 @@
+{
+  "name": "@bloom/domain",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Bloom domain model: Effect Schema entities, branded IDs, events, UI component parts, and domain service interfaces.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test --pass-with-no-tests"
+  },
+  "dependencies": {
+    "effect": "4.0.0"
+  }
+}
