@@ -17,7 +17,8 @@ final class AppModel {
     /// The server the sign-in screen suggests (last used, else localhost).
     private(set) var suggestedServer: String
 
-    private(set) var api: BloomAPI?
+    /// The signed-in session's API client and feature models.
+    private(set) var workspace: Workspace?
     let session: SessionStore
 
     static let defaultServer = "http://localhost:3000"
@@ -30,22 +31,27 @@ final class AppModel {
         suggestedServer = session.serverURL?.absoluteString ?? Self.defaultServer
         // Optimistic: a stored session is signed in until the server says otherwise,
         // so the app opens instantly and works with cached data while offline.
+        phase = .signedOut
         if let server = session.serverURL, session.token != nil {
-            api = BloomAPI(serverURL: server, tokens: session)
+            workspace = makeWorkspace(server: server)
             phase = .signedIn(
                 session.cachedUser ?? BloomUser(id: "", email: "", name: "")
             )
-        } else {
-            phase = .signedOut
+        }
+    }
+
+    private func makeWorkspace(server: URL) -> Workspace {
+        Workspace(api: BloomAPI(serverURL: server, tokens: session)) { [weak self] in
+            self?.signOutLocally()
         }
     }
 
     /// Confirms a stored session with `GET /api/me`. Only a 401 signs out;
     /// being offline keeps the session.
     func refreshUser() async {
-        guard let api, case .signedIn = phase else { return }
+        guard let workspace, case .signedIn = phase else { return }
         do {
-            let user = try await api.me()
+            let user = try await workspace.api.me()
             session.remember(user)
             phase = .signedIn(user)
         } catch .unauthorized {
@@ -76,7 +82,7 @@ final class AppModel {
             let api = BloomAPI(serverURL: link.server, tokens: StaticTokenProvider(token))
             let user = try await api.me()
             try session.save(server: link.server, token: token, user: user)
-            self.api = BloomAPI(serverURL: link.server, tokens: session)
+            workspace = makeWorkspace(server: link.server)
             suggestedServer = link.server.absoluteString
             phase = .signedIn(user)
         } catch let failure as AuthClient.Failure {
@@ -110,7 +116,7 @@ final class AppModel {
     /// Any feature that gets a 401 calls this.
     func signOutLocally() {
         session.clear()
-        api = nil
+        workspace = nil
         phase = .signedOut
     }
 }

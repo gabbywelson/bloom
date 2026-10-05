@@ -11,7 +11,9 @@ struct RootView: View {
             case .signedOut, .signingIn:
                 SignInView()
             case .signedIn:
-                HomeView()
+                if let workspace = model.workspace {
+                    HomeView(workspace: workspace)
+                }
             }
         }
         .animation(.easeInOut(duration: 0.25), value: model.phase)
