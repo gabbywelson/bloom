@@ -1,0 +1,7 @@
+<task-notification>
+<task-id>boi36qivd</task-id>
+<tool-use-id>toolu_011rHFtVpMaFBWgtuM5RzU2V</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-welson--t3-worktrees-bloom-t3code-5a275e74/deb2819b-92b1-4621-ae7f-e92eb0e632ea/tasks/boi36qivd.output</output-file>
+<status>completed</status>
+<summary>Background command "Symlink .env and run baseline check" completed (exit code 0)</summary>
+</task-notification>
