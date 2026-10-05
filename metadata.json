@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M45CGG6CY5J3N32RCWYYNMJC",
+  "strategy": "manual-commit",
+  "branch": "t3code/ios-client-skeleton-and-chat",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/ios/Bloom/Features/Push/PushRegistration.swift",
+    "docs/adrs/0023-device-registration-for-push.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 42,
+    "cache_creation_tokens": 34106,
+    "cache_read_tokens": 15523117,
+    "output_tokens": 27736,
+    "api_call_count": 21
+  }
+}
