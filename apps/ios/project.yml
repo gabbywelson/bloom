@@ -61,6 +61,18 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         ITSAppUsesNonExemptEncryption: false
+        # bloom://sign-in?link=... from `bun run auth:link --ios` (ADR 0018).
+        CFBundleURLTypes:
+          - CFBundleURLName: dev.bloom.app
+            CFBundleURLSchemes: [bloom]
+        # Plain HTTP only to the local network (localhost in the simulator) and
+        # to Tailscale names, whose traffic WireGuard already encrypts (ADR 0018).
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSExceptionDomains:
+            ts.net:
+              NSIncludesSubdomains: true
+              NSExceptionAllowsInsecureHTTPLoads: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.bloom.app

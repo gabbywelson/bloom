@@ -1,36 +1,25 @@
 import BloomKit
 import SwiftUI
 
-/// Top of the view tree. For now a calm welcome; sign-in, chat and tasks
-/// hang off this once the API client exists.
+/// Top of the view tree: sign-in until there is a session, then the app.
 struct RootView: View {
-    @State private var flower: FlowerState = .closed
+    @Environment(AppModel.self) private var model
 
     var body: some View {
-        ZStack {
-            BloomPalette.page.ignoresSafeArea()
-            VStack(spacing: BloomSpacing.s4) {
-                Flower(state: flower, size: 96)
-                    .accessibilityIdentifier("bloom-flower")
-                Text("Bloom")
-                    .font(.largeTitle.weight(.semibold))
-                    .foregroundStyle(BloomPalette.ink)
-                Text("A calm place for the things on your mind.")
-                    .font(.callout)
-                    .foregroundStyle(BloomPalette.inkMuted)
-                    .multilineTextAlignment(.center)
+        Group {
+            switch model.phase {
+            case .signedOut, .signingIn:
+                SignInView()
+            case .signedIn:
+                HomeView()
             }
-            .padding(BloomSpacing.s6)
         }
-        .task {
-            try? await Task.sleep(for: .milliseconds(300))
-            flower = .opening
-            try? await Task.sleep(for: .seconds(1.2))
-            flower = .open
-        }
+        .animation(.easeInOut(duration: 0.25), value: model.phase)
+        .onOpenURL { url in model.handle(url: url) }
+        .task { await model.refreshUser() }
     }
 }
 
 #Preview {
-    RootView()
+    RootView().environment(AppModel())
 }

@@ -37,6 +37,41 @@ verdicts and the result banner are printed, and the full log is written to
 
 To open the project in Xcode: `bun run ios:generate && open apps/ios/Bloom.xcodeproj`.
 
+## Auth: first run
+
+There is no sign-up and no password (ADR 0003). The app signs in with a
+one-time link from the server and keeps a bearer token in the Keychain
+(ADR 0018).
+
+1. Start the server (`bun run dev:server`, port 3000).
+2. On the server machine, ask for a link the phone can reach:
+
+   ```sh
+   bun run auth:link --ios --server http://localhost:3000       # simulator
+   bun run auth:link --ios --server http://<mac>.<tailnet>.ts.net:3000  # phone
+   ```
+
+   It prints `bloom://sign-in?link=…`. Links work once and expire after 15
+   minutes.
+
+3. Open it on the phone. In the simulator:
+
+   ```sh
+   xcrun simctl openurl booted "$(bun run auth:link --ios --server http://localhost:3000 2>/dev/null | tail -1)"
+   ```
+
+   and tap **Open** when iOS asks. On a device, AirDrop or paste it; the
+   sign-in screen also accepts the plain magic link (without `--ios`) pasted
+   into its field, and has a "Server address" override.
+
+The app opens the link itself (no browser), reads the session token from the
+response, confirms it with `GET /api/me`, and from then on sends
+`Authorization: Bearer <token>`. Settings shows who is signed in and where,
+and **Sign out** revokes the session on the server. Any 401 returns the app to
+sign-in. Plain HTTP is allowed only to localhost and `*.ts.net` names.
+
+UI tests launch with `-BloomResetSession`, which clears the stored session.
+
 ## API client
 
 The client is generated at build time by swift-openapi-generator from

@@ -5,6 +5,11 @@
  * issued by the CLI (`bun run auth:link`), never from a sign-up flow. See
  * docs/adrs/0003-auth-bootstrap-magic-link-then-passkeys.md.
  *
+ * Native clients (the iOS app) cannot use the cookie: they open the same
+ * magic link themselves, read the session token from the `set-auth-token`
+ * response header, and send it back as `Authorization: Bearer <token>`
+ * (Better Auth's `bearer` plugin; ADR 0018).
+ *
  * This module builds the Better Auth instance from explicit options so the
  * server can construct it inside an Effect Layer. It has no module-level
  * singleton; `better-auth.cli.ts` is the only place that instantiates it at
@@ -12,7 +17,7 @@
  */
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
-import { magicLink } from "better-auth/plugins";
+import { bearer, magicLink } from "better-auth/plugins";
 import type { Pool } from "pg";
 
 export interface AuthOptions {
@@ -57,6 +62,8 @@ export const createAuth = (options: AuthOptions) =>
       },
     },
     plugins: [
+      // Only signed tokens (the exact `set-auth-token` value) are accepted.
+      bearer({ requireSignature: true }),
       magicLink({
         expiresIn: MAGIC_LINK_EXPIRES_IN_SECONDS,
         disableSignUp: true,

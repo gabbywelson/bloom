@@ -177,6 +177,13 @@ is blocked (`disableSignUp` plus a database hook). Everything auth lives
 under `/api/auth`; all other API groups except `health` require a session
 (ADR 0003, 0004, 0015).
 
+The iOS app uses the same session model through Better Auth's `bearer`
+plugin (ADR 0018): `bun run auth:link --ios` prints `bloom://sign-in?link=…`;
+the app opens the magic link itself, keeps the signed token from the
+`set-auth-token` response header in the Keychain and sends
+`Authorization: Bearer` on every call. The `Authorization` middleware
+forwards the cookie and a Bearer header (nothing else) to `getSession`.
+
 ## Jobs
 
 `packages/pipeline` declares `ScheduledJob`s; the server registers each with
