@@ -8,6 +8,21 @@
       "binary": {
         "path": "node_modules/.bin/tsc",
         "arguments": ["--lsp", "--stdio"]
+      },
+      // Never auto-import from the vendored reference sources in repos/.
+      // Zed passes patterns through unresolved, so anchor with **/ rather
+      // than relying on VS Code's workspace-relative "repos/**".
+      "settings": {
+        "typescript": {
+          "preferences": {
+            "autoImportFileExcludePatterns": ["**/repos/**"]
+          }
+        },
+        "javascript": {
+          "preferences": {
+            "autoImportFileExcludePatterns": ["**/repos/**"]
+          }
+        }
       }
     }
   },
@@ -18,5 +33,22 @@
     "TSX": {
       "language_servers": ["vtsls", "!typescript-language-server", "..."]
     }
-  }
+  },
+  // Hide repos/ (git subtrees kept for coding agents) from the project panel,
+  // file finder, project search and file watcher. This setting replaces
+  // Zed's defaults rather than extending them, so they are repeated here.
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/.svn",
+    "**/.hg",
+    "**/.jj",
+    "**/.sl",
+    "**/.repo",
+    "**/CVS",
+    "**/.DS_Store",
+    "**/Thumbs.db",
+    "**/.classpath",
+    "**/.settings",
+    "repos/**"
+  ]
 }

@@ -34,5 +34,7 @@
         "diagnostics": false
       }
     ]
-  }
+  },
+  // repos/ holds vendored reference sources (git subtrees) for coding agents
+  "exclude": ["node_modules", "repos"]
 }
