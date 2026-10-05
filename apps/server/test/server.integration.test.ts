@@ -1,13 +1,19 @@
 /**
- * Boots the real `ServerLive` (Postgres from `DATABASE_URL`, pg-boss, Better
- * Auth, agent runtime) on a random port and checks the public surface. Run
- * from the repo root (`bun test apps/server`) so Bun loads `.env`.
+ * Boots the real `ServerLive` (Postgres, pg-boss, Better Auth, agent runtime)
+ * on a random port and checks the public surface. Bun only loads `.env` from
+ * the current directory and `bun run --filter` runs this from apps/server, so
+ * every required setting has a test default; a root `.env` still wins.
  */
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { Effect, ManagedRuntime } from "effect";
 import { HttpServer } from "effect/http";
 
 process.env["PORT"] = "0";
+process.env["DATABASE_URL"] ??= "postgresql://postgres:postgres@localhost:5432/bloom";
+process.env["BLOOM_WEB_ORIGIN"] ??= "http://localhost:5173";
+process.env["BETTER_AUTH_SECRET"] ??= "integration-test-only-secret-not-for-real-use";
+process.env["BLOOM_OWNER_EMAIL"] ??= "owner@example.com";
+process.env["BLOOM_OWNER_NAME"] ??= "Owner";
 process.env["ANTHROPIC_API_KEY"] ??= "sk-test-placeholder";
 process.env["LOG_LEVEL"] ??= "Warn";
 process.env["BLOOM_WEB_DIST"] = "apps/server/test/no-such-build-dir";

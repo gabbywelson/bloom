@@ -23,11 +23,12 @@
     "lint": "oxlint",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "test": "bun run --filter './packages/*' --filter './apps/*' test",
+    "test": "bash scripts/test-all.sh",
     "check": "bun run typecheck && bun run lint && bun run fmt:check && bun run test",
     "start:server": "bun run apps/server/src/main.ts",
     "infra:up:langfuse": "docker compose --profile langfuse up -d",
-    "e2e": "bash scripts/e2e.sh"
+    "e2e": "bash scripts/e2e.sh",
+    "test:verbose": "VERBOSE=1 bash scripts/test-all.sh"
   },
   "devDependencies": {
     "@effect/tsgo": "^0.48.0",
