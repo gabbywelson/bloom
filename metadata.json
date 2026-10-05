@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M45D24Y7B4GP0Q1KXJDY82KS",
+  "strategy": "manual-commit",
+  "branch": "t3code/ios-client-skeleton-and-chat",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/web/src/routes/captures/+page.svelte",
+    "docs/adrs/0024-messages-carry-their-trace-id.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 100,
+    "cache_creation_tokens": 47202,
+    "cache_read_tokens": 39280025,
+    "output_tokens": 27120,
+    "api_call_count": 50
+  }
+}
