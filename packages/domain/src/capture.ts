@@ -4,11 +4,15 @@ import { Immutable, Nullable, WithDefault } from "./fields.ts";
 import { CaptureId } from "./ids.ts";
 
 /** Modality of a raw capture. */
-export const CaptureKind = Schema.Literals(["text", "voice", "share", "image"]);
+export const CaptureKind = Schema.Literals(["text", "voice", "share", "image"]).annotate({
+  identifier: "CaptureKind",
+});
 export type CaptureKind = typeof CaptureKind.Type;
 
 /** Triage state of a capture. */
-export const CaptureStatus = Schema.Literals(["new", "routed", "dismissed"]);
+export const CaptureStatus = Schema.Literals(["new", "routed", "dismissed"]).annotate({
+  identifier: "CaptureStatus",
+});
 export type CaptureStatus = typeof CaptureStatus.Type;
 
 /**

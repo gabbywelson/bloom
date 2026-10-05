@@ -4,6 +4,7 @@ import { MeGroup } from "./groups/me.ts";
 import { MessagesGroup } from "./groups/messages.ts";
 import { TasksGroup } from "./groups/tasks.ts";
 import { ThreadsGroup } from "./groups/threads.ts";
+import { bloomOpenApiTransform } from "./openapi-transform.ts";
 
 /**
  * The Bloom HTTP API: single source of truth for server handlers
@@ -21,5 +22,6 @@ export class BloomApi extends HttpApi.make("bloom")
       version: "0.1.0",
       description:
         "HTTP contract of the Bloom personal agent. Authenticated routes rely on the Better Auth session cookie; chat replies stream as Server-Sent Events.",
+      transform: bloomOpenApiTransform,
     }),
   ) {}

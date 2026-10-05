@@ -2,7 +2,10 @@ import { Schema } from "effect";
 import { UiComponent } from "./ui-component.ts";
 
 /** Plain text. */
-export const TextPart = Schema.Struct({ type: Schema.Literal("text"), text: Schema.String });
+export const TextPart = Schema.Struct({
+  type: Schema.Literal("text"),
+  text: Schema.String,
+}).annotate({ identifier: "TextPart" });
 export type TextPart = typeof TextPart.Type;
 
 /** An image by URL with optional alt text. */
@@ -10,7 +13,7 @@ export const ImagePart = Schema.Struct({
   type: Schema.Literal("image"),
   url: Schema.String,
   alt: Schema.optionalKey(Schema.String),
-});
+}).annotate({ identifier: "ImagePart" });
 export type ImagePart = typeof ImagePart.Type;
 
 /** A tool invocation requested by the model. */
@@ -19,7 +22,7 @@ export const ToolCallPart = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   args: Schema.Json,
-});
+}).annotate({ identifier: "ToolCallPart" });
 export type ToolCallPart = typeof ToolCallPart.Type;
 
 /** The result of a tool invocation, matched by `toolCallId`. */
@@ -29,14 +32,14 @@ export const ToolResultPart = Schema.Struct({
   name: Schema.String,
   ok: Schema.Boolean,
   result: Schema.Json,
-});
+}).annotate({ identifier: "ToolResultPart" });
 export type ToolResultPart = typeof ToolResultPart.Type;
 
 /** A generative UI component embedded in the message. */
 export const UiComponentPart = Schema.Struct({
   type: Schema.Literal("ui_component"),
   component: UiComponent,
-});
+}).annotate({ identifier: "UiComponentPart" });
 export type UiComponentPart = typeof UiComponentPart.Type;
 
 /**
@@ -49,5 +52,7 @@ export const MessagePart = Schema.Union([
   ToolCallPart,
   ToolResultPart,
   UiComponentPart,
-]).pipe(Schema.toTaggedUnion("type"));
+])
+  .annotate({ identifier: "MessagePart" })
+  .pipe(Schema.toTaggedUnion("type"));
 export type MessagePart = typeof MessagePart.Type;

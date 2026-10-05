@@ -4,11 +4,15 @@ import { Immutable, Nullable, ServerTimestamp, WithDefault } from "./fields.ts";
 import { ThreadId } from "./ids.ts";
 
 /** `main` is the single ongoing conversation; `side` is a tangent; `quest` is a longer project. */
-export const ThreadKind = Schema.Literals(["main", "side", "quest"]);
+export const ThreadKind = Schema.Literals(["main", "side", "quest"]).annotate({
+  identifier: "ThreadKind",
+});
 export type ThreadKind = typeof ThreadKind.Type;
 
 /** How much context a run in this thread assembles by default. */
-export const ContextScope = Schema.Literals(["full", "minimal"]);
+export const ContextScope = Schema.Literals(["full", "minimal"]).annotate({
+  identifier: "ContextScope",
+});
 export type ContextScope = typeof ContextScope.Type;
 
 /**
@@ -20,7 +24,9 @@ export const defaultContextScope = (kind: ThreadKind): ContextScope =>
   kind === "side" ? "minimal" : "full";
 
 /** Whether the thread still accepts messages. */
-export const ThreadStatus = Schema.Literals(["active", "archived"]);
+export const ThreadStatus = Schema.Literals(["active", "archived"]).annotate({
+  identifier: "ThreadStatus",
+});
 export type ThreadStatus = typeof ThreadStatus.Type;
 
 /** A conversation. Exactly one thread has kind `main`; see `ThreadService.ensureMain`. */
@@ -43,6 +49,9 @@ export class Thread extends Model.Class<Thread>("Thread")({
   createdAt: Model.DateTimeInsertFromDate,
   updatedAt: Model.DateTimeUpdateFromDate,
 }) {}
+
+/** `Thread.json` under its OpenAPI component name (see `TaskJson`). */
+export const ThreadJson = Thread.json.annotate({ identifier: "Thread" });
 
 /** Client payload for creating a thread (decoded; defaults applied, `contextScope` may be omitted). */
 export type ThreadCreate = typeof Thread.jsonCreate.Type;

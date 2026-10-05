@@ -5,7 +5,9 @@ import { MessageId, RunId, ThreadId } from "./ids.ts";
 import { MessagePart } from "./message-part.ts";
 
 /** Who authored a message turn. */
-export const MessageRole = Schema.Literals(["user", "assistant", "system", "tool"]);
+export const MessageRole = Schema.Literals(["user", "assistant", "system", "tool"]).annotate({
+  identifier: "MessageRole",
+});
 export type MessageRole = typeof MessageRole.Type;
 
 /** Concatenates the text of all `text` parts, in order, separated by newlines. */
@@ -32,6 +34,9 @@ export class Message extends Model.Class<Message>("Message")({
     return messageText(message);
   }
 }
+
+/** `Message.json` under its OpenAPI component name (see `TaskJson`). */
+export const MessageJson = Message.json.annotate({ identifier: "Message" });
 
 /** Input for `MessageService.append`; `runId` may be omitted. */
 export const MessageAppend = Schema.Struct({

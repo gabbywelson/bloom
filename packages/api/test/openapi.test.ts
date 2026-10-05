@@ -4,11 +4,21 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { openApiSpec, renderOpenApiJson } from "../src/openapi.ts";
+import {
+  chatStreamEventComponents,
+  findDiscriminator,
+  jsonEqual,
+} from "../src/openapi-transform.ts";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 
 describe("OpenAPI", () => {
   const spec = openApiSpec();
+  const component = (name: string): Record<string, unknown> => {
+    const schema = spec.components.schemas[name];
+    expect(schema).toBeDefined();
+    return (schema ?? {}) as Record<string, unknown>;
+  };
 
   it("carries the API metadata", () => {
     expect(spec.openapi).toBe("3.1.0");
@@ -45,13 +55,108 @@ describe("OpenAPI", () => {
 
   it("keeps create payloads minimal: only title / kind are required, and kind excludes main", () => {
     const task = spec.paths["/api/tasks"]?.post?.requestBody?.content["application/json"]?.schema;
-    expect(task?.required).toEqual(["title"]);
+    expect(task).toEqual({ $ref: "#/components/schemas/TaskCreate" });
+    expect(component("TaskCreate")["required"]).toEqual(["title"]);
     const thread =
       spec.paths["/api/threads"]?.post?.requestBody?.content["application/json"]?.schema;
-    expect(thread).toMatchObject({
+    expect(thread).toEqual({ $ref: "#/components/schemas/ThreadCreate" });
+    expect(component("ThreadCreate")).toMatchObject({
       required: ["kind"],
       properties: { kind: { enum: ["side", "quest"] } },
     });
+  });
+
+  it("names the wire types as components, so generated clients get readable types", () => {
+    const names = Object.keys(spec.components.schemas);
+    for (const name of [
+      "Task",
+      "TaskCreate",
+      "TaskUpdate",
+      "TaskStatus",
+      "Thread",
+      "ThreadCreate",
+      "Message",
+      "MessagePart",
+      "UiComponent",
+      "ChatStreamEvent",
+      "AuthUser",
+      "HealthStatus",
+      "SendMessage",
+    ]) {
+      expect(names).toContain(name);
+    }
+    expect(
+      spec.paths["/api/tasks"]?.get?.responses[200]?.content?.["application/json"]?.schema,
+    ).toEqual({ type: "array", items: { $ref: "#/components/schemas/Task" } });
+  });
+
+  it("turns tagged unions into oneOf with a discriminator mapping", () => {
+    expect(component("MessagePart")["discriminator"]).toEqual({
+      propertyName: "type",
+      mapping: {
+        text: "#/components/schemas/TextPart",
+        image: "#/components/schemas/ImagePart",
+        tool_call: "#/components/schemas/ToolCallPart",
+        tool_result: "#/components/schemas/ToolResultPart",
+        ui_component: "#/components/schemas/UiComponentPart",
+      },
+    });
+    expect(component("UiComponent")).toMatchObject({ discriminator: { propertyName: "kind" } });
+    const events = component("ChatStreamEvent");
+    expect(events["anyOf"]).toBeUndefined();
+    expect(events["oneOf"]).toHaveLength(8);
+    expect(Object.keys((events["discriminator"] as { mapping: object }).mapping)).toEqual([
+      "message_start",
+      "text_delta",
+      "tool_call",
+      "tool_result",
+      "ui_component",
+      "tasks_changed",
+      "message_end",
+      "error",
+    ]);
+  });
+
+  it("leaves unions without a shared literal property alone", () => {
+    const schemas = {
+      A: { type: "object", properties: { a: { type: "string" } }, required: ["a"] },
+      B: { type: "object", properties: { b: { type: "string" } }, required: ["b"] },
+    };
+    const refs = [{ $ref: "#/components/schemas/A" }, { $ref: "#/components/schemas/B" }];
+    expect(findDiscriminator(schemas, refs)).toBeUndefined();
+    expect(findDiscriminator(schemas, [refs[0], { type: "null" }])).toBeUndefined();
+  });
+
+  it("documents the SSE data as ChatStreamEvent JSON", () => {
+    const data = spec.paths["/api/threads/{id}/messages"]?.post?.responses[200]?.content?.[
+      "text/event-stream"
+    ]?.schema as { properties: { data: { $ref: string } } };
+    const target = data.properties.data.$ref.replace("#/components/schemas/", "");
+    expect(component(target)).toMatchObject({
+      type: "string",
+      contentMediaType: "application/json",
+      contentSchema: { $ref: "#/components/schemas/ChatStreamEvent" },
+    });
+  });
+
+  it("carries the stream event schemas exactly as the endpoints describe them", () => {
+    // Shared definitions (Message, MessagePart, ...) come from two generators:
+    // the API document and the standalone ChatStreamEvent document. They must agree.
+    const stream = chatStreamEventComponents();
+    for (const [name, definition] of Object.entries(stream.definitions)) {
+      const inSpec = { ...component(name) };
+      delete inSpec["discriminator"];
+      const expected: Record<string, unknown> = { ...definition };
+      if (Array.isArray(expected["anyOf"]) && Array.isArray(inSpec["oneOf"])) {
+        expected["oneOf"] = expected["anyOf"];
+        delete expected["anyOf"];
+      }
+      expect(jsonEqual(inSpec, expected)).toBe(true);
+    }
+  });
+
+  it("the committed openapi.json is up to date (run `bun run openapi`)", () => {
+    expect(readFileSync(join(packageDir, "openapi.json"), "utf8")).toBe(renderOpenApiJson());
   });
 
   it("describes the chat stream as text/event-stream", () => {

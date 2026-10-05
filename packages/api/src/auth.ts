@@ -7,7 +7,7 @@ export const AuthUser = Schema.Struct({
   id: UserId,
   email: Schema.String,
   name: Schema.String,
-});
+}).annotate({ identifier: "AuthUser" });
 export type AuthUser = typeof AuthUser.Type;
 
 /** Request-scoped service carrying the authenticated user; provided by `Authorization`. */

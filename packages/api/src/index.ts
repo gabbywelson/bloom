@@ -13,3 +13,4 @@ export * from "./groups/tasks.ts";
 export * from "./groups/threads.ts";
 export * from "./openapi.ts";
 export * from "./payload.ts";
+export * from "./openapi-transform.ts";
