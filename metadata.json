@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M45BQ625RS4J0PFX0ZB39QN2",
+  "strategy": "manual-commit",
+  "branch": "t3code/ios-client-skeleton-and-chat",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/ios/Bloom/Features/Health/HealthSync.swift",
+    "apps/ios/BloomKit/Health/HealthSummary.swift",
+    "apps/ios/BloomTests/HealthSummaryTests.swift",
+    "docs/adrs/0021-healthkit-daily-summaries-as-events.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 74,
+    "cache_creation_tokens": 46897,
+    "cache_read_tokens": 24602855,
+    "output_tokens": 33880,
+    "api_call_count": 37
+  }
+}
