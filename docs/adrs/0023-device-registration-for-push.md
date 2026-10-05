@@ -29,8 +29,8 @@ devices. Without a paid team there is no APNs key to send with anyway.
   asks for notification permission, calls
   `registerForRemoteNotifications()` and posts the hex token with
   `sandbox` (debug builds) or `production` (release). It re-registers on
-  launch while the flag is on. The app carries `aps-environment:
-development`.
+  launch while the flag is on. The app's entitlements set
+  `aps-environment` to `development`.
 - **OpenAPI.** A one-literal `Schema.Literals(["ios"])` comes out of Effect
   as a one-member `anyOf`, which the Swift generator turns into a struct; the
   transform now unwraps one-member unions (ADR 0017's list grows by one).
@@ -43,6 +43,6 @@ development`.
 - Turning the flag off does not unregister the device server-side; delete it
   with `DELETE /api/devices/:id` if needed. A real "unregister" can come with
   delivery.
-- Verified on the simulator: the iOS permission alert, then `POST
-/api/devices` 200 and one `ios`/`sandbox` row in the dev database;
+- Verified on the simulator: the iOS permission alert, then a 200 from
+  `POST /api/devices` and one `ios`/`sandbox` row in the dev database;
   `GET /api/devices` responses carry no token.

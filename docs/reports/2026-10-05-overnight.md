@@ -66,8 +66,9 @@ Read this first. The table is the summary; the log has the evidence; the
 - `apps/server/test/bearer.integration.test.ts` against `bloom_test`:
   magic link → `set-auth-token` → session resolves; link replay, tampered
   and unsigned tokens rejected; bearer sign-out revokes.
-- Live: server on :3101, `bun run auth:link --ios --server
-http://localhost:3101`, opened in the iPhone 17 (iOS 27.0) simulator →
+- Live: server on :3101, a link from
+  `bun run auth:link --ios --server http://localhost:3101`, opened in the
+  iPhone 17 (iOS 27.0) simulator →
   server log `GET /api/auth/magic-link/verify` 302, `GET /api/me` 200 →
   "You're signed in", Settings shows the owner and server. `grep -c token=`
   on the server log: 0.
@@ -75,8 +76,9 @@ http://localhost:3101`, opened in the iPhone 17 (iOS 27.0) simulator →
 **Incident: OrbStack stall, and a stray compose project (cleaned up)**
 
 - At 22:20 Postgres stopped answering (even `pg_isready` hung): the ADR 0010
-  stall. Ran `orb stop && orb start`, then `docker compose up -d postgres
-otel-collector jaeger` as instructed. From a git worktree that command
+  stall. Ran `orb stop && orb start`, then
+  `docker compose up -d postgres otel-collector jaeger` as instructed. From a
+  git worktree that command
   used the directory name as the project name and created a second project
   `t3code-5a275e74` (3 containers in "Created", a network, an empty volume)
   that failed on :5432. Removed exactly that project
@@ -135,15 +137,16 @@ otel-collector jaeger` as instructed. From a git worktree that command
   turns ("Please add a task: look over the Bloom iPhone app in the
   morning." → Bloom asked which morning → "Tomorrow morning." → "used
   create task"). Jaeger traces **`6a53516dfe2dbe59dd4376e432a4b161`** (26
-  spans) and **`0476642571a364087b11f4ff14ee904c`** (37 spans: `http.server
-POST` → `auth.session` → `agent.run` → `ModelProvider.stream` →
+  spans) and **`0476642571a364087b11f4ff14ee904c`** (37 spans:
+  `http.server POST` → `auth.session` → `agent.run` → `ModelProvider.stream` →
   `TaskService.create`). The `authorization` header shows as `<redacted>` in
   the span.
-- Tasks live: Done on an e2e leftover ("Water the ferns-muuqiylg") → `POST
-/api/tasks/:id/complete` 200, list refetched, badge 4 → 3.
+- Tasks live: Done on an e2e leftover ("Water the ferns-muuqiylg") →
+  `POST /api/tasks/:id/complete` 200, list refetched, badge 4 → 3.
 - Captures live: curl with a bearer token (POST 200, `?status=new`, PATCH
-  dismissed, 404, 400, 401); Safari → Share → Bloom → Save filed `{ url,
-title: "Example Domain" }` and the Captures tab listed it.
+  dismissed, 404, 400, 401); Safari → Share → Bloom → Save filed a share
+  capture with the URL and title "Example Domain", and the Captures tab
+  listed it.
 - Events live: curl Inserted → Duplicate → 400 for `source: domain` → 401.
   HealthKit: the real permission sheet (three types plus iOS 27's history
   step), then "Up to date." and no request, as the simulator has no data.
