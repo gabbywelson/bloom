@@ -50,7 +50,10 @@ xcb() {
   "${cmd[@]}" >"$log" 2>&1 || status=$?
   # Errors, warnings from our sources, test verdicts and the final banner.
   grep -E "error:|$IOS_DIR/[^ ]*: warning:|^Test Suite .*(passed|failed)|Executed [0-9]+ tests?,|[✔✘] Test run|✘ Test|Failing tests:|\*\* [A-Z ]+ \*\*" "$log" \
-    | grep -v "^Test Suite 'Selected tests'" | awk '!seen[$0]++' || true
+    | grep -v "^Test Suite 'Selected tests'" | grep -v "$BUILD_DIR/" | awk '!seen[$0]++' || true
+  # The OpenAPI generator reports schemas it had to skip; any of these means a
+  # field silently missing from the Swift types.
+  grep -E "^warning: .*(not supported|skipping)" "$log" | awk '!seen[$0]++' || true
   if [[ $status -ne 0 ]]; then
     echo "xcodebuild $action failed (status $status); full log: $log"
     tail -30 "$log"

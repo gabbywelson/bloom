@@ -1,0 +1,6 @@
+# swift-openapi-generator configuration for the Bloom API client (ADR 0017).
+generate:
+  - types
+  - client
+accessModifier: public
+namingStrategy: idiomatic

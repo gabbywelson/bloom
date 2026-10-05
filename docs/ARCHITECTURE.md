@@ -34,9 +34,11 @@ apps/server (Bun + Effect)                         ┌────────�
 apps/
   server/      Bun + Effect process: config, auth, http groups, jobs, main.ts, cli/
   web/         SvelteKit 3 + Svelte 5 runes SPA (adapter-static, PWA, Playwright e2e)
+  ios/         SwiftUI app (XcodeGen project.yml; Bloom app, BloomKit framework, tests)
 packages/
   domain/      Effect Schema entities (Model.Class), branded ids, unions, service tags
   api/         HttpApi contract, Authorization middleware tag, derived client, openapi.json
+               (+ the OpenAPI transform and the recorded chat-stream fixtures)
   db/          migrations, repositories, DB-backed service Layers, migrate/seed scripts
   agent/       ModelProvider + providers, routing, SOUL loader, context assembly, tools, runner
   pipeline/    scheduled jobs (heartbeat), interruption policy v1

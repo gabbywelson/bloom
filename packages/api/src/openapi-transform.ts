@@ -15,6 +15,13 @@
  *    That is what lets generators emit a real enum instead of trying every
  *    member. The schemas already guarantee that exactly one member matches,
  *    so `oneOf` states nothing new.
+ * 3. Nullable values (`anyOf: [X, { type: "null" }]`, how Effect writes
+ *    `Schema.NullOr`) become `X` with `"null"` added to its `type` (and to
+ *    its `enum`), the conventional OpenAPI 3.1 form. swift-openapi-generator
+ *    rejects a bare `{ type: "null" }` member and drops the whole property.
+ *    A nullable `$ref` to a primitive component is inlined to get there; a
+ *    nullable `$ref` to an object stays an `anyOf` (no such field exists yet,
+ *    and the generator would drop it: add a test before introducing one).
  */
 import { ChatStreamEvent } from "@bloom/domain";
 import { JsonSchema, Schema } from "effect";
@@ -173,6 +180,56 @@ export const addDiscriminators = (spec: Json): Json => {
   return spec;
 };
 
+const PRIMITIVE_TYPES = new Set(["string", "integer", "number", "boolean"]);
+
+const isNullSchema = (schema: unknown): boolean =>
+  isRecord(schema) && schema["type"] === "null" && Object.keys(schema).length === 1;
+
+/**
+ * `X | null` as a single schema with `"null"` in its type, or `undefined` when
+ * that is not possible: `X` has no single `type`, or `X` is a `$ref` to
+ * anything but a primitive (inlining a named object would duplicate it).
+ */
+const asNullable = (schemas: Json, member: Json): Json | undefined => {
+  const name = refName(member);
+  const target = name === undefined ? member : recordAt(schemas, name);
+  if (target === undefined) return undefined;
+  const type = target["type"];
+  if (typeof type !== "string" || type === "null") return undefined;
+  if (name !== undefined && !PRIMITIVE_TYPES.has(type)) return undefined;
+  const nullable: Json = { ...structuredClone(target), type: [type, "null"] };
+  const values = target["enum"];
+  if (Array.isArray(values)) nullable["enum"] = [...values, null];
+  return nullable;
+};
+
+/** Rewrites every two-member `anyOf`/`oneOf` with a `null` member, anywhere in the document (step 3). */
+export const normalizeNullable = (spec: Json): Json => {
+  const components = recordAt(spec, "components");
+  const schemas = (components === undefined ? undefined : recordAt(components, "schemas")) ?? {};
+  const visit = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      for (const item of node) visit(item);
+      return;
+    }
+    if (!isRecord(node)) return;
+    for (const key of ["anyOf", "oneOf"]) {
+      const members = node[key];
+      if (!Array.isArray(members) || members.length !== 2) continue;
+      const nullIndex = members.findIndex(isNullSchema);
+      const other = members[1 - nullIndex];
+      if (nullIndex < 0 || !isRecord(other)) continue;
+      const nullable = asNullable(schemas, other);
+      if (nullable === undefined) continue;
+      delete node[key];
+      Object.assign(node, nullable);
+    }
+    for (const value of Object.values(node)) visit(value);
+  };
+  visit(spec);
+  return spec;
+};
+
 /** The transform installed on `BloomApi`. Works on a copy; the input is not mutated. */
 export const bloomOpenApiTransform = (spec: Record<string, unknown>): Record<string, unknown> =>
-  addDiscriminators(addChatStreamEvents(structuredClone(spec)));
+  normalizeNullable(addDiscriminators(addChatStreamEvents(structuredClone(spec))));

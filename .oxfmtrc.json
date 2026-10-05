@@ -8,6 +8,7 @@
     "**/dist/**",
     "bun.lock",
     "packages/api/openapi.json",
+    "apps/ios/BloomKit/API/openapi.json",
     "docs/planning/**",
     "docs/VISION.md",
     "**/test-results/**",

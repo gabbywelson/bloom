@@ -11,6 +11,7 @@ directly.
 | `project.yml`  | XcodeGen spec; the single source of the Xcode project                    |
 | `Bloom/`       | The app target: `App/` (entry, root view), resources                     |
 | `BloomKit/`    | Framework shared by the app and its extensions: design system, API, auth |
+| `BloomKit/API` | `openapi.json` (symlink), generator config, `BloomAPI` facade, SSE       |
 | `BloomTests/`  | Unit tests (Swift Testing), hosted in the app                            |
 | `BloomUITests` | UI tests (XCTest)                                                        |
 
@@ -35,6 +36,22 @@ verdicts and the result banner are printed, and the full log is written to
 `apps/ios/build/` (git-ignored), so builds do not touch `~/Library`.
 
 To open the project in Xcode: `bun run ios:generate && open apps/ios/Bloom.xcodeproj`.
+
+## API client
+
+The client is generated at build time by swift-openapi-generator from
+`packages/api/openapi.json` (ADR 0017). After changing the API, run
+`bun run openapi` and build; the generated `Components.Schemas.*` types and
+`Client` change with it. `BloomAPI` wraps the generated client in async
+methods that throw `BloomAPIError`; `ChatStream.events` turns the chat
+endpoint's Server-Sent Events into the generated `ChatStreamEvent` enum.
+The unit tests decode the recorded streams in
+`packages/api/test/fixtures/chat-stream`, which a bun test keeps
+byte-identical to the server's output.
+
+If the generator cannot represent a schema it skips it with a warning, and
+the field silently disappears from Swift. `bun run ios:build` prints those
+warnings; treat any as a bug in the document.
 
 ## Signing
 

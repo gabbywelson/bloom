@@ -8,6 +8,7 @@ import {
   chatStreamEventComponents,
   findDiscriminator,
   jsonEqual,
+  normalizeNullable,
 } from "../src/openapi-transform.ts";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
@@ -142,8 +143,10 @@ describe("OpenAPI", () => {
   it("carries the stream event schemas exactly as the endpoints describe them", () => {
     // Shared definitions (Message, MessagePart, ...) come from two generators:
     // the API document and the standalone ChatStreamEvent document. They must agree.
-    const stream = chatStreamEventComponents();
-    for (const [name, definition] of Object.entries(stream.definitions)) {
+    const stream = normalizeNullable({
+      components: { schemas: structuredClone(chatStreamEventComponents().definitions) },
+    }) as { components: { schemas: Record<string, Record<string, unknown>> } };
+    for (const [name, definition] of Object.entries(stream.components.schemas)) {
       const inSpec = { ...component(name) };
       delete inSpec["discriminator"];
       const expected: Record<string, unknown> = { ...definition };
@@ -153,6 +156,49 @@ describe("OpenAPI", () => {
       }
       expect(jsonEqual(inSpec, expected)).toBe(true);
     }
+  });
+
+  it("writes nullable values as type arrays, never as a bare null schema", () => {
+    expect(JSON.stringify(spec)).not.toContain('{"type":"null"}');
+    expect(component("Task")["properties"]).toMatchObject({
+      notes: { type: ["string", "null"] },
+      effort: { type: ["integer", "null"], minimum: 1, maximum: 5 },
+      energyKind: {
+        type: ["string", "null"],
+        enum: ["focus", "admin", "physical", "social", "rest", null],
+      },
+    });
+    expect(spec.paths["/api/tasks"]?.get?.parameters?.[0]).toMatchObject({
+      name: "status",
+      schema: { type: ["array", "null"], items: { $ref: "#/components/schemas/TaskStatus" } },
+    });
+  });
+
+  it("normalizeNullable keeps nullable references to named objects as they are", () => {
+    const nullableObject = { anyOf: [{ $ref: "#/components/schemas/Obj" }, { type: "null" }] };
+    const document = {
+      components: {
+        schemas: {
+          Obj: { type: "object", properties: {} },
+          Kind: { type: "string", enum: ["a", "b"] },
+          Holder: {
+            type: "object",
+            properties: {
+              obj: nullableObject,
+              kind: { anyOf: [{ type: "null" }, { $ref: "#/components/schemas/Kind" }] },
+              many: { anyOf: [{ type: "string" }, { type: "integer" }] },
+            },
+          },
+        },
+      },
+    };
+    const normalized = normalizeNullable(structuredClone(document)) as {
+      components: { schemas: { Holder: { properties: Record<string, unknown> } } };
+    };
+    const holder = normalized.components.schemas.Holder.properties;
+    expect(holder.obj).toEqual(nullableObject);
+    expect(holder.kind).toEqual({ type: ["string", "null"], enum: ["a", "b", null] });
+    expect(holder.many).toEqual({ anyOf: [{ type: "string" }, { type: "integer" }] });
   });
 
   it("the committed openapi.json is up to date (run `bun run openapi`)", () => {

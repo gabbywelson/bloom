@@ -249,15 +249,11 @@
             "name": "limit",
             "in": "query",
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "pattern": "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$"
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$"
             },
             "required": false
           }
@@ -326,13 +322,9 @@
                   "type": "object",
                   "properties": {
                     "id": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
+                      "type": [
+                        "string",
+                        "null"
                       ]
                     },
                     "event": {
@@ -400,13 +392,9 @@
                               ]
                             },
                             "fiberId": {
-                              "anyOf": [
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "null"
-                                }
+                              "type": [
+                                "number",
+                                "null"
                               ]
                             }
                           },
@@ -473,17 +461,13 @@
             "name": "status",
             "in": "query",
             "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TaskStatus"
-                  }
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "$ref": "#/components/schemas/TaskStatus"
+              }
             },
             "required": false
           }
@@ -823,91 +807,67 @@
             "minLength": 1
           },
           "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "status": {
             "$ref": "#/components/schemas/TaskStatus"
           },
           "due": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "scheduledFor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "effort": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 5
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5
           },
           "energyKind": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/EnergyKind"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "focus",
+              "admin",
+              "physical",
+              "social",
+              "rest",
+              null
             ]
           },
           "area": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "source": {
             "$ref": "#/components/schemas/TaskSource"
           },
           "parentId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "completedAt": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "createdAt": {
@@ -974,81 +934,61 @@
             "minLength": 1
           },
           "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "status": {
             "$ref": "#/components/schemas/TaskStatus"
           },
           "due": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "scheduledFor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "effort": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 5
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5
           },
           "energyKind": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/EnergyKind"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "focus",
+              "admin",
+              "physical",
+              "social",
+              "rest",
+              null
             ]
           },
           "area": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "source": {
             "$ref": "#/components/schemas/TaskSource"
           },
           "parentId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           }
         },
@@ -1063,81 +1003,61 @@
             "minLength": 1
           },
           "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "status": {
             "$ref": "#/components/schemas/TaskStatus"
           },
           "due": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "scheduledFor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "effort": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 5
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5
           },
           "energyKind": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/EnergyKind"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "focus",
+              "admin",
+              "physical",
+              "social",
+              "rest",
+              null
             ]
           },
           "area": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "source": {
             "$ref": "#/components/schemas/TaskSource"
           },
           "parentId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           }
         },
@@ -1205,13 +1125,9 @@
             }
           },
           "runId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "createdAt": {
@@ -1409,13 +1325,9 @@
             "$ref": "#/components/schemas/TaskStatus"
           },
           "due": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           }
         },
@@ -1584,23 +1496,15 @@
             "$ref": "#/components/schemas/ThreadKind"
           },
           "parentThreadId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "topic": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "contextScope": {
@@ -1610,13 +1514,9 @@
             "$ref": "#/components/schemas/ThreadStatus"
           },
           "lastMessageAt": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "createdAt": {
@@ -1673,23 +1573,15 @@
             ]
           },
           "parentThreadId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "topic": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "contextScope": {
