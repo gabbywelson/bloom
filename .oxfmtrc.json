@@ -9,6 +9,8 @@
     "bun.lock",
     "packages/api/openapi.json",
     "docs/planning/**",
-    "docs/VISION.md"
+    "docs/VISION.md",
+    "**/test-results/**",
+    "**/playwright-report/**"
   ]
 }
