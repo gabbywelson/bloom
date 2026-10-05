@@ -33,6 +33,15 @@ Swift app, want ISO-8601 strings.
   order.
 - `ThreadService.list` and `ThreadService.ensureMain` are Effect values, not
   zero-argument functions, to satisfy the Effect lint rule `lazy-effect`.
+- `Thread.contextScope` has no schema default. Omitting it on create is
+  distinguishable from choosing `"full"`, and `ThreadService.create` applies
+  `defaultContextScope(kind)` (side threads get `"minimal"`, main and quest
+  get `"full"`). The db layer must apply the same rule.
+- `Nudge` carries both `body` (the user-facing text the Compose stage writes)
+  and `reasoning` (the internal "why" for the debug panel), plus an optional
+  `messageId` when a nudge is delivered as an inbox message. `actions` is a
+  non-empty array: a nudge with nothing to tap is not a nudge.
+- `Event` rows are append-only: the update variants contain only `dedupeKey`.
 
 ## Consequences
 
