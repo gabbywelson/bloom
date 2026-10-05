@@ -7,6 +7,7 @@ export * from "./auth.ts";
 export * from "./client.ts";
 export * from "./groups/captures.ts";
 export * from "./groups/errors.ts";
+export * from "./groups/events.ts";
 export * from "./groups/health.ts";
 export * from "./groups/me.ts";
 export * from "./groups/messages.ts";

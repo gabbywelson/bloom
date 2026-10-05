@@ -12,28 +12,12 @@ import { describe, expect, it } from "bun:test";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  CaptureService,
-  type ChatStreamEvent,
-  MessageId,
-  MessageService,
-  TaskId,
-  TaskService,
-  ThreadId,
-  ThreadService,
-} from "@bloom/domain";
+import { type ChatStreamEvent, MessageId, TaskId, ThreadId } from "@bloom/domain";
 import { DateTime, Effect, Layer, Schema, Stream } from "effect";
 import { HttpRouter, HttpServer } from "effect/http";
 import { HttpApiBuilder } from "effect/http-api";
 import { BloomApi } from "../src/api.ts";
-import {
-  AuthorizationAllow,
-  CapturesHandlers,
-  HealthHandlers,
-  MeHandlers,
-  TasksHandlers,
-  ThreadsHandlers,
-} from "./handlers.ts";
+import { AuthorizationAllow, HandlersWithoutMessages, MemoryServices } from "./handlers.ts";
 
 const fixtureDir = fileURLToPath(new URL("./fixtures/chat-stream/", import.meta.url));
 
@@ -132,23 +116,11 @@ const ScriptedMessages = HttpApiBuilder.group(BloomApi, "messages", (handlers) =
 
 const AppLayer = HttpApiBuilder.layer(BloomApi).pipe(
   Layer.provide(
-    Layer.mergeAll(
-      HealthHandlers,
-      MeHandlers,
-      ThreadsHandlers,
-      TasksHandlers,
-      CapturesHandlers,
-      ScriptedMessages,
-    ).pipe(Layer.provideMerge(AuthorizationAllow)),
-  ),
-  Layer.provide(
-    Layer.mergeAll(
-      TaskService.layerMemory,
-      ThreadService.layerMemory,
-      MessageService.layerMemory,
-      CaptureService.layerMemory,
+    Layer.mergeAll(HandlersWithoutMessages, ScriptedMessages).pipe(
+      Layer.provideMerge(AuthorizationAllow),
     ),
   ),
+  Layer.provide(MemoryServices),
   Layer.provide(HttpServer.layerServices),
 );
 

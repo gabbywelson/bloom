@@ -8,6 +8,7 @@ import { Layer } from "effect";
 import { HttpApiBuilder, HttpApiScalar } from "effect/http-api";
 import { AuthorizationLive } from "../auth/authorization.ts";
 import { CapturesLive } from "./groups/captures.ts";
+import { EventsLive } from "./groups/events.ts";
 import { HealthLive } from "./groups/health.ts";
 import { MeLive } from "./groups/me.ts";
 import { MessagesLive } from "./groups/messages.ts";
@@ -25,6 +26,7 @@ export const GroupsLive = Layer.mergeAll(
   MessagesLive,
   TasksLive,
   CapturesLive,
+  EventsLive,
 ).pipe(Layer.provideMerge(AuthorizationLive));
 
 /** The API routes plus `GET /api/openapi.json`. */

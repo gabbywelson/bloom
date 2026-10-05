@@ -10,6 +10,8 @@ struct HomeView: View {
     }
 
     let workspace: Workspace
+    @Environment(AppModel.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
     @State private var tab: Tab = .chat
     @State private var showSettings = false
 
@@ -31,5 +33,9 @@ struct HomeView: View {
         .sheet(isPresented: $showSettings) { SettingsView() }
         // The badge and the first tab switch should not wait for a visit.
         .task { await workspace.tasks.refresh() }
+        // Health summaries go out when the app comes forward (a no-op unless enabled).
+        .task(id: scenePhase) {
+            if scenePhase == .active { await model.health.sync(api: workspace.api) }
+        }
     }
 }

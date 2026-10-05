@@ -185,6 +185,15 @@ the app opens the magic link itself, keeps the signed token from the
 `Authorization: Bearer` on every call. The `Authorization` middleware
 forwards the cookie and a Bearer header (nothing else) to `getSession`.
 
+## Client ingestion
+
+`POST /api/events` lets clients append to the event log through `EventSink`
+(idempotent by `dedupeKey`; the `domain` and `system` sources are reserved
+for the server). The iOS app sends one `healthkit` / `daily_summary` event per
+completed day when the user opts in (ADR 0021). These events are
+private-tier: nothing reads them into a model context yet, and nothing may
+until context assembly filters by sensitivity.
+
 ## Jobs
 
 `packages/pipeline` declares `ScheduledJob`s; the server registers each with

@@ -52,6 +52,8 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Bloom reads your daily steps, sleep and resting heart rate to send one private summary a day to your Bloom server. It never writes to Health.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

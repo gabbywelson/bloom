@@ -962,6 +962,60 @@
           "required": true
         }
       }
+    },
+    "/api/events": {
+      "post": {
+        "tags": [
+          "Events"
+        ],
+        "operationId": "events.ingest",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "IngestResult",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidEventSource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidEventSourceEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Appends an event from a client (e.g. `source: healthkit`, `type: daily_summary`). With a `dedupeKey` the call is idempotent: a repeat answers `Duplicate` and writes nothing. The sources `domain` and `system` are reserved for the server.",
+        "summary": "Ingest an event",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventIngest"
+              }
+            }
+          },
+          "required": true
+        }
+      }
     }
   },
   "components": {
@@ -982,6 +1036,146 @@
         "required": [
           "_tag",
           "message"
+        ],
+        "additionalProperties": false
+      },
+      "InvalidEventSourceEncoded": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "InvalidEventSource"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_tag",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "IngestResult": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/EventInserted"
+          },
+          {
+            "$ref": "#/components/schemas/EventDuplicate"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "_tag",
+          "mapping": {
+            "Inserted": "#/components/schemas/EventInserted",
+            "Duplicate": "#/components/schemas/EventDuplicate"
+          }
+        }
+      },
+      "EventDuplicate": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "Duplicate"
+            ]
+          },
+          "dedupeKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_tag",
+          "dedupeKey"
+        ],
+        "additionalProperties": false
+      },
+      "EventInserted": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "Inserted"
+            ]
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          }
+        },
+        "required": [
+          "_tag",
+          "event"
+        ],
+        "additionalProperties": false
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string"
+          },
+          "payload": {},
+          "dedupeKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "type",
+          "occurredAt",
+          "payload",
+          "dedupeKey",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "title": "Event.json"
+      },
+      "EventIngest": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string"
+          },
+          "payload": {},
+          "dedupeKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "source",
+          "type",
+          "occurredAt",
+          "payload"
         ],
         "additionalProperties": false
       },
@@ -2234,6 +2428,10 @@
     {
       "name": "Captures",
       "description": "Raw input (text, voice, share, image) waiting for triage."
+    },
+    {
+      "name": "Events",
+      "description": "Things that happened that Bloom might care about, sent by clients."
     }
   ]
 }

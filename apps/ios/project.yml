@@ -52,17 +52,21 @@ targets:
     entitlements:
       path: Bloom/Bloom.entitlements
       properties:
-        &sharedEntitlements # The session token and server are shared with the extensions (ADR 0020).
+        # The session token and server are shared with the extensions (ADR 0020).
         keychain-access-groups:
           - $(AppIdentifierPrefix)dev.bloom.shared
         com.apple.security.application-groups:
           - group.dev.bloom
+        # Read-only daily summaries, opt-in from Settings (ADR 0021).
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
     info:
       path: Bloom/Info.plist
       properties:
         CFBundleDisplayName: Bloom
         BloomKeychainGroup: $(AppIdentifierPrefix)dev.bloom.shared
         BloomAppGroup: group.dev.bloom
+        NSHealthShareUsageDescription: Bloom reads your daily steps, sleep and resting heart rate to send one private summary a day to your Bloom server. It never writes to Health.
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen:
@@ -105,7 +109,11 @@ targets:
         embed: false
     entitlements:
       path: BloomShare/BloomShare.entitlements
-      properties: *sharedEntitlements
+      properties:
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)dev.bloom.shared
+        com.apple.security.application-groups:
+          - group.dev.bloom
     info:
       path: BloomShare/Info.plist
       properties:

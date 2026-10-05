@@ -18,6 +18,7 @@ const makeClient = HttpApiTest.groups(BloomApi, [
   "messages",
   "tasks",
   "captures",
+  "events",
 ]);
 
 type Client = Effect.Success<typeof makeClient>;
@@ -455,5 +456,40 @@ describe("captures", () => {
           expect(error._tag).toBe("Unauthorized");
         }),
       AuthorizationReject,
+    ));
+});
+
+describe("events", () => {
+  const summary = {
+    source: "healthkit",
+    type: "daily_summary",
+    occurredAt: "2026-10-04T07:00:00.000Z",
+    payload: { day: "2026-10-04", steps: 8123 },
+    dedupeKey: "healthkit:2026-10-04",
+  };
+
+  it("ingests once per dedupeKey and answers Duplicate after", () =>
+    run((client) =>
+      Effect.gen(function* () {
+        const first = yield* client.events.ingest({ payload: summary });
+        expect(first._tag).toBe("Inserted");
+        if (first._tag === "Inserted") {
+          expect(first.event.source).toBe("healthkit");
+          expect(first.event.dedupeKey).toBe("healthkit:2026-10-04");
+          expect(first.event.payload).toEqual({ day: "2026-10-04", steps: 8123 });
+        }
+        const again = yield* client.events.ingest({ payload: summary });
+        expect(again).toEqual({ _tag: "Duplicate", dedupeKey: "healthkit:2026-10-04" });
+      }),
+    ));
+
+  it("refuses the server's own sources", () =>
+    run((client) =>
+      Effect.gen(function* () {
+        const error = yield* Effect.flip(
+          client.events.ingest({ payload: { ...summary, source: "domain" } }),
+        );
+        expect(error._tag).toBe("InvalidEventSource");
+      }),
     ));
 });

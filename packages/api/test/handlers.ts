@@ -6,6 +6,8 @@ import {
   Capture,
   CaptureService,
   type ChatStreamEvent,
+  EventIngest,
+  EventSink,
   MessageService,
   Task,
   TaskService,
@@ -17,11 +19,13 @@ import { DateTime, Effect, Layer, Schema, Stream } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import { BloomApi } from "../src/api.ts";
 import { Authorization, type AuthUser, CurrentUser, Unauthorized } from "../src/auth.ts";
+import { InvalidEventSource, RESERVED_EVENT_SOURCES } from "../src/groups/events.ts";
 import { decodePayload } from "../src/payload.ts";
 
 const decodeTaskCreate = decodePayload(Task.jsonCreate);
 const decodeCaptureCreate = decodePayload(Capture.jsonCreate);
 const decodeThreadCreate = decodePayload(Thread.jsonCreate);
+const decodeEventIngest = decodePayload(EventIngest);
 
 /** The single owner every allowed request runs as. */
 export const fixedUser: AuthUser = {
@@ -147,21 +151,45 @@ export const CapturesHandlers = HttpApiBuilder.group(
   }),
 );
 
-/** Every group's test handlers over fresh in-memory domain services. */
-export const TestHandlers = Layer.mergeAll(
+/** Test version of `POST /api/events`, with the same reserved-source rule as the server. */
+export const EventsHandlers = HttpApiBuilder.group(
+  BloomApi,
+  "events",
+  Effect.fn(function* (handlers) {
+    const sink = yield* EventSink;
+    return handlers.handle(
+      "ingest",
+      Effect.fn(function* ({ payload }) {
+        const input = yield* decodeEventIngest(payload);
+        if (RESERVED_EVENT_SOURCES.includes(input.source)) {
+          return yield* new InvalidEventSource({ message: "reserved" });
+        }
+        return yield* sink.ingest(input);
+      }),
+    );
+  }),
+);
+
+/** Fresh in-memory domain services for one test. */
+export const MemoryServices = Layer.mergeAll(
+  TaskService.layerMemory,
+  ThreadService.layerMemory,
+  MessageService.layerMemory,
+  CaptureService.layerMemory,
+  EventSink.layerMemory,
+);
+
+/** Every group but `messages`, so a test can supply its own chat stream. */
+export const HandlersWithoutMessages = Layer.mergeAll(
   HealthHandlers,
   MeHandlers,
   ThreadsHandlers,
-  MessagesHandlers,
   TasksHandlers,
   CapturesHandlers,
-).pipe(
-  Layer.provide(
-    Layer.mergeAll(
-      TaskService.layerMemory,
-      ThreadService.layerMemory,
-      MessageService.layerMemory,
-      CaptureService.layerMemory,
-    ),
-  ),
+  EventsHandlers,
+);
+
+/** Every group's test handlers over fresh in-memory domain services. */
+export const TestHandlers = Layer.mergeAll(HandlersWithoutMessages, MessagesHandlers).pipe(
+  Layer.provide(MemoryServices),
 );

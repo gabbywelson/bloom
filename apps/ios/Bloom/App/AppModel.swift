@@ -20,6 +20,8 @@ final class AppModel {
     /// The signed-in session's API client and feature models.
     private(set) var workspace: Workspace?
     let session: SessionStore
+    /// Opt-in Apple Health summaries (ADR 0021); a device preference, not part of the session.
+    let health = HealthSync()
 
     static let defaultServer = "http://localhost:3000"
 

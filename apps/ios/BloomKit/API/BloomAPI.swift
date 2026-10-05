@@ -195,4 +195,19 @@ public struct BloomAPI: Sendable {
         case let .undocumented(status, _): throw .status(status)
         }
     }
+
+    // MARK: - Events
+
+    /// `POST /api/events`: idempotent by `dedupeKey` (a repeat answers `.duplicate`).
+    public func ingestEvent(
+        _ input: Components.Schemas.EventIngest
+    ) async throws(BloomAPIError) -> Components.Schemas.IngestResult {
+        let output = try await call { try await client.events_ingest(body: .json(input)) }
+        switch output {
+        case let .ok(ok): return try await call { try ok.body.json }
+        case .unauthorized: throw .unauthorized
+        case .badRequest: throw .badRequest
+        case let .undocumented(status, _): throw .status(status)
+        }
+    }
 }

@@ -23,6 +23,8 @@ struct SettingsView: View {
                         LabeledContent("Server", value: server.absoluteString)
                     }
                 }
+                HealthSection()
+
                 Section {
                     Button(role: .destructive) {
                         signingOut = true
@@ -48,6 +50,44 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
+        }
+    }
+}
+
+/// Opt-in for daily Apple Health summaries (ADR 0021).
+private struct HealthSection: View {
+    @Environment(AppModel.self) private var model
+
+    private var health: HealthSync { model.health }
+
+    var body: some View {
+        Section {
+            if health.status == .unavailable {
+                Text("Apple Health isn't available on this device.")
+                    .foregroundStyle(BloomPalette.inkMuted)
+            } else {
+                Toggle("Share daily summaries", isOn: Binding(
+                    get: { health.isEnabled },
+                    set: { on in
+                        if on {
+                            guard let api = model.workspace?.api else { return }
+                            Task { await health.enable(api: api) }
+                        } else {
+                            health.disable()
+                        }
+                    }
+                ))
+                .accessibilityIdentifier("health-toggle")
+                if health.status == .syncing {
+                    Text("Sending").foregroundStyle(BloomPalette.inkMuted)
+                } else if let result = health.lastResult {
+                    Text(result).foregroundStyle(BloomPalette.inkMuted)
+                }
+            }
+        } header: {
+            Text("Apple Health")
+        } footer: {
+            Text("Once a day: steps, last night's sleep and resting heart rate, as one private summary on your server. Bloom doesn't bring it up unless you do.")
         }
     }
 }

@@ -104,7 +104,11 @@ warnings; treat any as a bug in the document.
   page title), text or photo as a capture, with an optional note. It uses the
   app's session (shared Keychain group and app group, ADR 0020); sign in to
   the app first.
-- **Settings** (gear): who is signed in, the server, sign out.
+- **Settings** (gear): who is signed in, the server, sign out, and
+  **Apple Health** → "Share daily summaries" (opt-in; ADR 0021): steps, last
+  night's sleep and resting heart rate for each completed day, sent as one
+  `healthkit` / `daily_summary` event per day. Nothing is sent for days
+  without data, which on the simulator is every day.
 
 ## Demo mode (UI tests)
 

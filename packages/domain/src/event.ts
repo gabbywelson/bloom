@@ -29,3 +29,6 @@ export const EventIngest = Schema.Struct({
   dedupeKey: Schema.optionalKey(Schema.NullOr(Schema.String)),
 });
 export type EventIngest = typeof EventIngest.Type;
+
+/** `Event.json` under its OpenAPI component name (see `TaskJson`). */
+export const EventJson = Event.json.annotate({ identifier: "Event" });

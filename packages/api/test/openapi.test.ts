@@ -56,6 +56,17 @@ describe("OpenAPI", () => {
     expect(spec.paths["/api/captures"]?.post).toBeDefined();
     expect(spec.paths["/api/captures/{id}"]?.get).toBeDefined();
     expect(spec.paths["/api/captures/{id}"]?.patch).toBeDefined();
+    expect(spec.paths["/api/events"]?.post).toBeDefined();
+  });
+
+  it("describes the ingest result as a union discriminated on _tag", () => {
+    expect(component("IngestResult")["discriminator"]).toEqual({
+      propertyName: "_tag",
+      mapping: {
+        Inserted: "#/components/schemas/EventInserted",
+        Duplicate: "#/components/schemas/EventDuplicate",
+      },
+    });
   });
 
   it("keeps create payloads minimal: only title / kind are required, and kind excludes main", () => {

@@ -1,5 +1,6 @@
 import { HttpApi, OpenApi } from "effect/http-api";
 import { CapturesGroup } from "./groups/captures.ts";
+import { EventsGroup } from "./groups/events.ts";
 import { HealthGroup } from "./groups/health.ts";
 import { MeGroup } from "./groups/me.ts";
 import { MessagesGroup } from "./groups/messages.ts";
@@ -15,7 +16,7 @@ import { bloomOpenApiTransform } from "./openapi-transform.ts";
  * Auth and is deliberately not part of this contract.
  */
 export class BloomApi extends HttpApi.make("bloom")
-  .add(HealthGroup, MeGroup, ThreadsGroup, MessagesGroup, TasksGroup, CapturesGroup)
+  .add(HealthGroup, MeGroup, ThreadsGroup, MessagesGroup, TasksGroup, CapturesGroup, EventsGroup)
   .prefix("/api")
   .annotateMerge(
     OpenApi.annotations({
