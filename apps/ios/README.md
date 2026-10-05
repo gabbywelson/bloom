@@ -115,7 +115,9 @@ warnings; treat any as a bug in the document.
   **Apple Health** → "Share daily summaries" (opt-in; ADR 0021): steps, last
   night's sleep and resting heart rate for each completed day, sent as one
   `healthkit` / `daily_summary` event per day. Nothing is sent for days
-  without data, which on the simulator is every day.
+  without data, which on the simulator is every day. **Labs** → "Register
+  for push" stores this phone's APNs token on the server (groundwork; nothing
+  sends notifications yet, ADR 0023).
 
 ## Demo mode (UI tests)
 

@@ -24,6 +24,7 @@ struct SettingsView: View {
                     }
                 }
                 HealthSection()
+                LabsSection()
 
                 Section {
                     Button(role: .destructive) {
@@ -89,5 +90,40 @@ private struct HealthSection: View {
         } footer: {
             Text("Once a day: steps, last night's sleep and resting heart rate, as one private summary on your server. Bloom doesn't bring it up unless you do.")
         }
+    }
+}
+
+/// Experimental switches. Push registration stores this phone's token on the
+/// server; nothing sends notifications yet (ADR 0023).
+private struct LabsSection: View {
+    @Environment(AppModel.self) private var model
+    @State private var enabled = false
+
+    private var status: String? {
+        switch model.push.status {
+        case .off: nil
+        case .requesting: "Registering"
+        case .denied: "Notifications are off for Bloom in iOS Settings."
+        case .registered: "Registered with the server."
+        case let .failed(message): message
+        }
+    }
+
+    var body: some View {
+        Section {
+            Toggle("Register for push", isOn: $enabled)
+                .accessibilityIdentifier("push-toggle")
+                .onChange(of: enabled) { _, on in
+                    Task { await model.push.setEnabled(on, api: model.workspace?.api) }
+                }
+            if let status {
+                Text(status).foregroundStyle(BloomPalette.inkMuted)
+            }
+        } header: {
+            Text("Labs")
+        } footer: {
+            Text("Groundwork for nudges: stores this phone's notification token on your server. Bloom doesn't send notifications yet.")
+        }
+        .onAppear { enabled = model.push.isEnabled }
     }
 }

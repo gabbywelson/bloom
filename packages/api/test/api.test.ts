@@ -19,6 +19,7 @@ const makeClient = HttpApiTest.groups(BloomApi, [
   "tasks",
   "captures",
   "events",
+  "devices",
 ]);
 
 type Client = Effect.Success<typeof makeClient>;
@@ -490,6 +491,31 @@ describe("events", () => {
           client.events.ingest({ payload: { ...summary, source: "domain" } }),
         );
         expect(error._tag).toBe("InvalidEventSource");
+      }),
+    ));
+});
+
+describe("devices", () => {
+  it("registers once per token, never returns the token, lists and removes", () =>
+    run((client) =>
+      Effect.gen(function* () {
+        const payload = {
+          platform: "ios",
+          pushToken: "tok-1",
+          pushEnvironment: "sandbox",
+        } as const;
+        const device = yield* client.devices.register({ payload });
+        expect(Object.keys(device)).not.toContain("pushToken");
+        const again = yield* client.devices.register({
+          payload: { ...payload, name: "iPhone", appVersion: "0.1.0 (1)" },
+        });
+        expect(again.id).toBe(device.id);
+        expect(again.name).toBe("iPhone");
+        expect((yield* client.devices.list()).map((d) => d.id)).toEqual([device.id]);
+        yield* client.devices.remove({ params: { id: device.id } });
+        expect(yield* client.devices.list()).toEqual([]);
+        const error = yield* Effect.flip(client.devices.remove({ params: { id: device.id } }));
+        expect(error._tag).toBe("DeviceNotFound");
       }),
     ));
 });

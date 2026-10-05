@@ -5,6 +5,7 @@
  */
 export * from "./actor.ts";
 export * from "./capture.ts";
+export * from "./device.ts";
 export * from "./errors.ts";
 export * from "./event.ts";
 export * from "./fields.ts";
@@ -19,6 +20,7 @@ export * from "./task.ts";
 export * from "./thread.ts";
 export * from "./ui-component.ts";
 export * from "./services/capture-service.ts";
+export * from "./services/device-service.ts";
 export * from "./services/event-sink.ts";
 export * from "./services/message-service.ts";
 export * from "./services/task-service.ts";

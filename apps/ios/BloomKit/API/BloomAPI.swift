@@ -210,4 +210,18 @@ public struct BloomAPI: Sendable {
         case let .undocumented(status, _): throw .status(status)
         }
     }
+
+    // MARK: - Devices
+
+    /// `POST /api/devices`: stores this phone's APNs token (upsert by token).
+    public func registerDevice(
+        _ input: Components.Schemas.DeviceRegister
+    ) async throws(BloomAPIError) -> Components.Schemas.Device {
+        let output = try await call { try await client.devices_register(body: .json(input)) }
+        switch output {
+        case let .ok(ok): return try await call { try ok.body.json }
+        case .unauthorized: throw .unauthorized
+        case let .undocumented(status, _): throw .status(status)
+        }
+    }
 }

@@ -57,6 +57,26 @@ describe("OpenAPI", () => {
     expect(spec.paths["/api/captures/{id}"]?.get).toBeDefined();
     expect(spec.paths["/api/captures/{id}"]?.patch).toBeDefined();
     expect(spec.paths["/api/events"]?.post).toBeDefined();
+    expect(spec.paths["/api/devices"]?.post).toBeDefined();
+    expect(spec.paths["/api/devices"]?.get).toBeDefined();
+    expect(spec.paths["/api/devices/{id}"]?.delete).toBeDefined();
+  });
+
+  it("writes a one-literal union as a plain enum", () => {
+    expect(component("DevicePlatform")).toEqual({ type: "string", enum: ["ios"] });
+    const unwrapped = normalizeNullable({
+      components: { schemas: { One: { anyOf: [{ type: "string", enum: ["a"] }] } } },
+    }) as { components: { schemas: { One: unknown } } };
+    expect(unwrapped.components.schemas.One).toEqual({ type: "string", enum: ["a"] });
+  });
+
+  it("accepts a push token on register and never describes one in responses", () => {
+    expect(component("DeviceRegister")["required"]).toEqual([
+      "platform",
+      "pushToken",
+      "pushEnvironment",
+    ]);
+    expect(Object.keys(component("Device")["properties"] as object)).not.toContain("pushToken");
   });
 
   it("describes the ingest result as a union discriminated on _tag", () => {

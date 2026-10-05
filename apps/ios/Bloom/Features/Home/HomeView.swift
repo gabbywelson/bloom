@@ -33,6 +33,7 @@ struct HomeView: View {
         .sheet(isPresented: $showSettings) { SettingsView() }
         // The badge and the first tab switch should not wait for a visit.
         .task { await workspace.tasks.refresh() }
+        .task { await model.push.registerIfEnabled(api: workspace.api) }
         .onChange(of: model.route, initial: true) { _, route in
             switch route {
             case .tasks?: tab = .tasks

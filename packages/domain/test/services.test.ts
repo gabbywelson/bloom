@@ -5,6 +5,10 @@ import {
   CaptureId,
   CaptureNotFound,
   CaptureService,
+  Device,
+  DeviceJson,
+  DeviceNotFound,
+  DeviceService,
   EventSink,
   MessageId,
   MessageService,
@@ -412,6 +416,60 @@ describe("CaptureService.layerMemory", () => {
           captures.update(missing, { status: "dismissed" }, "user"),
         );
         expect(patchError).toBeInstanceOf(CaptureNotFound);
+      }),
+    ));
+});
+
+describe("DeviceService.layerMemory", () => {
+  const runDevices = <A, E>(effect: Effect.Effect<A, E, DeviceService>) =>
+    Effect.runPromise(effect.pipe(Effect.provide(DeviceService.layerMemory)));
+  const decodeRegister = Schema.decodeSync(Device.jsonCreate);
+
+  it("registers once per push token and updates on re-registration", () =>
+    runDevices(
+      Effect.gen(function* () {
+        const devices = yield* DeviceService;
+        const first = yield* devices.register(
+          decodeRegister({ platform: "ios", pushToken: "abc123", pushEnvironment: "sandbox" }),
+        );
+        expect(first.name).toBeNull();
+        const again = yield* devices.register(
+          decodeRegister({
+            platform: "ios",
+            pushToken: "abc123",
+            pushEnvironment: "production",
+            name: "Gabby's iPhone",
+            appVersion: "0.1.0 (1)",
+          }),
+        );
+        expect(again.id).toBe(first.id);
+        expect(again.pushEnvironment).toBe("production");
+        expect(again.name).toBe("Gabby's iPhone");
+        const other = yield* devices.register(
+          decodeRegister({ platform: "ios", pushToken: "def456", pushEnvironment: "sandbox" }),
+        );
+        expect((yield* devices.list).map((device) => device.id)).toEqual([first.id, other.id]);
+
+        yield* devices.remove(first.id);
+        expect((yield* devices.list).map((device) => device.id)).toEqual([other.id]);
+        expect(yield* Effect.flip(devices.remove(first.id))).toBeInstanceOf(DeviceNotFound);
+      }),
+    ));
+
+  it("never puts the push token in the JSON shape", () =>
+    runDevices(
+      Effect.gen(function* () {
+        const devices = yield* DeviceService;
+        const device = yield* devices.register(
+          decodeRegister({
+            platform: "ios",
+            pushToken: "secret-token",
+            pushEnvironment: "sandbox",
+          }),
+        );
+        const json = Schema.encodeSync(DeviceJson)(device);
+        expect(Object.keys(json)).not.toContain("pushToken");
+        expect(JSON.stringify(json)).not.toContain("secret-token");
       }),
     ));
 });

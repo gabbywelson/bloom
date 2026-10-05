@@ -1016,6 +1016,131 @@
           "required": true
         }
       }
+    },
+    "/api/devices": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "devices.register",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Device",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Device"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Stores the device's APNs token. Registering the same token again updates name, version and environment instead of adding a row. The token is never returned.",
+        "summary": "Register a device for push",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRegister"
+              }
+            }
+          },
+          "required": true
+        }
+      },
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "devices.list",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Device"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Registered devices, oldest first.",
+        "summary": "List devices"
+      }
+    },
+    "/api/devices/{id}": {
+      "delete": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "devices.remove",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "<No Content>"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "DeviceNotFound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotFoundEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Removes the registration. Responds 204 with no body.",
+        "summary": "Forget a device"
+      }
     }
   },
   "components": {
@@ -1038,6 +1163,115 @@
           "message"
         ],
         "additionalProperties": false
+      },
+      "DeviceNotFoundEncoded": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "DeviceNotFound"
+            ]
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_tag",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/DevicePlatform"
+          },
+          "pushEnvironment": {
+            "$ref": "#/components/schemas/PushEnvironment"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "appVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "platform",
+          "pushEnvironment",
+          "name",
+          "appVersion",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "title": "Device.json"
+      },
+      "PushEnvironment": {
+        "type": "string",
+        "enum": [
+          "sandbox",
+          "production"
+        ]
+      },
+      "DevicePlatform": {
+        "type": "string",
+        "enum": [
+          "ios"
+        ]
+      },
+      "DeviceRegister": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "$ref": "#/components/schemas/DevicePlatform"
+          },
+          "pushToken": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pushEnvironment": {
+            "$ref": "#/components/schemas/PushEnvironment"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "appVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "platform",
+          "pushToken",
+          "pushEnvironment"
+        ],
+        "additionalProperties": false,
+        "title": "Device.jsonCreate"
       },
       "InvalidEventSourceEncoded": {
         "type": "object",
@@ -2432,6 +2666,10 @@
     {
       "name": "Events",
       "description": "Things that happened that Bloom might care about, sent by clients."
+    },
+    {
+      "name": "Devices",
+      "description": "Phones registered for push notifications."
     }
   ]
 }

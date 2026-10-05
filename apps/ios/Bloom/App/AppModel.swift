@@ -23,6 +23,8 @@ final class AppModel {
     let session: SessionStore
     /// Opt-in Apple Health summaries (ADR 0021); a device preference, not part of the session.
     let health = HealthSync()
+    /// Push registration groundwork, behind a Labs flag (ADR 0023).
+    let push = PushRegistration()
 
     /// Where a link from outside (widget, control, shortcut) wants to go.
     enum Route: Equatable {

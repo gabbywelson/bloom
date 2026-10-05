@@ -19,6 +19,8 @@
  *    `Schema.NullOr`) become `X` with `"null"` added to its `type` (and to
  *    its `enum`), the conventional OpenAPI 3.1 form. swift-openapi-generator
  *    rejects a bare `{ type: "null" }` member and drops the whole property.
+ *    A one-member `anyOf`/`oneOf` (how Effect writes a single-literal
+ *    `Schema.Literals`) is replaced by its member, so it stays an enum.
  *    A nullable `$ref` to a primitive component is inlined to get there; a
  *    nullable `$ref` to an object stays an `anyOf` (no such field exists yet,
  *    and the generator would drop it: add a test before introducing one).
@@ -215,6 +217,12 @@ export const normalizeNullable = (spec: Json): Json => {
     if (!isRecord(node)) return;
     for (const key of ["anyOf", "oneOf"]) {
       const members = node[key];
+      const only = Array.isArray(members) && members.length === 1 ? members[0] : undefined;
+      if (isRecord(only) && !Object.hasOwn(node, "discriminator")) {
+        delete node[key];
+        Object.assign(node, only);
+        continue;
+      }
       if (!Array.isArray(members) || members.length !== 2) continue;
       const nullIndex = members.findIndex(isNullSchema);
       const other = members[1 - nullIndex];

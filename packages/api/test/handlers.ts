@@ -6,6 +6,8 @@ import {
   Capture,
   CaptureService,
   type ChatStreamEvent,
+  Device,
+  DeviceService,
   EventIngest,
   EventSink,
   MessageService,
@@ -26,6 +28,7 @@ const decodeTaskCreate = decodePayload(Task.jsonCreate);
 const decodeCaptureCreate = decodePayload(Capture.jsonCreate);
 const decodeThreadCreate = decodePayload(Thread.jsonCreate);
 const decodeEventIngest = decodePayload(EventIngest);
+const decodeDeviceRegister = decodePayload(Device.jsonCreate);
 
 /** The single owner every allowed request runs as. */
 export const fixedUser: AuthUser = {
@@ -170,6 +173,19 @@ export const EventsHandlers = HttpApiBuilder.group(
   }),
 );
 
+export const DevicesHandlers = HttpApiBuilder.group(
+  BloomApi,
+  "devices",
+  Effect.fn(function* (handlers) {
+    const devices = yield* DeviceService;
+    return handlers.handleAll({
+      register: ({ payload }) => Effect.flatMap(decodeDeviceRegister(payload), devices.register),
+      list: () => devices.list,
+      remove: ({ params }) => devices.remove(params.id),
+    });
+  }),
+);
+
 /** Fresh in-memory domain services for one test. */
 export const MemoryServices = Layer.mergeAll(
   TaskService.layerMemory,
@@ -177,6 +193,7 @@ export const MemoryServices = Layer.mergeAll(
   MessageService.layerMemory,
   CaptureService.layerMemory,
   EventSink.layerMemory,
+  DeviceService.layerMemory,
 );
 
 /** Every group but `messages`, so a test can supply its own chat stream. */
@@ -187,6 +204,7 @@ export const HandlersWithoutMessages = Layer.mergeAll(
   TasksHandlers,
   CapturesHandlers,
   EventsHandlers,
+  DevicesHandlers,
 );
 
 /** Every group's test handlers over fresh in-memory domain services. */

@@ -87,12 +87,13 @@ used as the ordering tiebreaker (ADR 0012).
 | `Event`       | source, type, occurredAt, payload (jsonb), dedupeKey (partial unique); append-only                                                               |
 | `Nudge`       | triggerEventId, body, reasoning, channel, actions (non-empty), sentAt, outcome, outcomeAt, messageId                                             |
 | `Capture`     | kind (text/voice/share/image), payload, transcript, status, routedTo                                                                             |
+| `Device`      | platform, pushToken (write-only over the API), pushEnvironment, name, appVersion; upserted by token (ADR 0023)                                   |
 
 Not yet modelled: Routine, Chore, Area, Item, Memory, CheckIn (listed in
 VISION and the brief; deferred past Phase 0).
 
 Domain **service tags** (`TaskService`, `ThreadService`, `MessageService`,
-`CaptureService`, `EventSink`) are declared in `domain` with in-memory Layers
+`CaptureService`, `DeviceService`, `EventSink`) are declared in `domain` with in-memory Layers
 for tests and implemented in `db`. Every task and capture mutation writes an
 audit `Event` (`source: "domain"`) in the same transaction; capture events
 never include the payload (ADR 0019). `ChatStreamEvent` is the SSE
@@ -234,6 +235,6 @@ executable form of the Phase 0 done-condition.
 - Integration toolkits are not merged into the agent's toolkit yet.
 - Routine, Chore, Area, Item, Memory, CheckIn entities; sensitivity tiers
   are typed but no `Memory` data exists to filter.
-- iOS client; device tokens.
+- Push sending (devices register their APNs tokens; nothing sends yet, ADR 0023).
 - The "why did Bloom do this?" debug panel (trace ids are available on
   every run already).

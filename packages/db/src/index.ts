@@ -12,6 +12,7 @@ export { MigratorLive } from "./migrator.ts";
 export {
   CaptureServiceDb,
   DbServicesLive,
+  DeviceServiceDb,
   EventSinkDb,
   MessageServiceDb,
   TaskServiceDb,

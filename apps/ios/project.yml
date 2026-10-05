@@ -61,6 +61,8 @@ targets:
         # Read-only daily summaries, opt-in from Settings (ADR 0021).
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
+        # Push registration groundwork, behind the Labs flag (ADR 0023).
+        aps-environment: development
     info:
       path: Bloom/Info.plist
       properties:
