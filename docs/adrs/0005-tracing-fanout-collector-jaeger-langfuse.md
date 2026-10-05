@@ -25,8 +25,8 @@ still needed to see HTTP, SQL and job spans with full fidelity.
 
 - Trace IDs match across Jaeger and Langfuse, so a "why did Bloom do this?"
   panel can deep-link to either.
-- The compose stack is heavy (7 containers for Langfuse alone). Acceptable
-  for a dev machine; the home server runs the same file.
+- The compose stack is heavy (five containers for Langfuse alone). It is an
+  opt-in profile on dev machines (ADR 0010); the home server runs it always.
 - If non-model spans become noise in Langfuse, add a `filter` processor to
   the Langfuse pipeline keeping only spans with `gen_ai.*` attributes and
   their ancestors. Not done yet.
