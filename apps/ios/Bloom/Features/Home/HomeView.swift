@@ -6,6 +6,7 @@ struct HomeView: View {
     enum Tab: Hashable {
         case chat
         case tasks
+        case captures
     }
 
     let workspace: Workspace
@@ -21,10 +22,11 @@ struct HomeView: View {
                 TaskListView(showSettings: $showSettings)
             }
             .badge(workspace.tasks.open.count)
+            SwiftUI.Tab("Captures", systemImage: "tray", value: Tab.captures) {
+                CapturesView(showSettings: $showSettings)
+            }
         }
         .tint(BloomPalette.accent)
-        // A count, not an alarm: the badge stays quiet.
-        .badgeProminence(.decreased)
         .environment(workspace)
         .sheet(isPresented: $showSettings) { SettingsView() }
         // The badge and the first tab switch should not wait for a visit.

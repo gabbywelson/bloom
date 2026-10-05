@@ -157,4 +157,42 @@ public struct BloomAPI: Sendable {
         case let .undocumented(status, _): throw .status(status)
         }
     }
+
+    // MARK: - Captures
+
+    /// `POST /api/captures`: files raw input for triage (ADR 0019).
+    public func createCapture(_ draft: CaptureDraft) async throws(BloomAPIError) -> BloomCapture {
+        let output = try await call {
+            try await client.captures_create(body: .json(.init(kind: draft.kind, payload: draft.payload)))
+        }
+        switch output {
+        case let .ok(ok): return try await call { try ok.body.json }
+        case .unauthorized: throw .unauthorized
+        case let .undocumented(status, _): throw .status(status)
+        }
+    }
+
+    /// `GET /api/captures`, optionally filtered by status; creation order.
+    public func captures(status: [BloomCaptureStatus]? = nil) async throws(BloomAPIError) -> [BloomCapture] {
+        let output = try await call { try await client.captures_list(query: .init(status: status)) }
+        switch output {
+        case let .ok(ok): return try await call { try ok.body.json }
+        case .unauthorized: throw .unauthorized
+        case let .undocumented(status, _): throw .status(status)
+        }
+    }
+
+    /// `PATCH /api/captures/{id}`: triage (status, routedTo, transcript).
+    public func updateCapture(
+        id: String,
+        _ patch: Components.Schemas.CaptureUpdate
+    ) async throws(BloomAPIError) -> BloomCapture {
+        let output = try await call { try await client.captures_update(path: .init(id: id), body: .json(patch)) }
+        switch output {
+        case let .ok(ok): return try await call { try ok.body.json }
+        case .unauthorized: throw .unauthorized
+        case .notFound: throw .notFound
+        case let .undocumented(status, _): throw .status(status)
+        }
+    }
 }

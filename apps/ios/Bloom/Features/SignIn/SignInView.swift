@@ -118,5 +118,5 @@ struct SignInView: View {
 }
 
 #Preview {
-    SignInView().environment(AppModel(session: .standard))
+    SignInView().environment(AppModel(session: .shared))
 }

@@ -49,4 +49,25 @@ final class DemoFlowTests: XCTestCase {
         XCTAssertTrue(dentist.waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Water the plants"].exists)
     }
+
+    @MainActor
+    func testQuickCaptureFilesAndDismisses() {
+        let app = launchDemo()
+        app.tabBars.buttons["Captures"].tap()
+        XCTAssertTrue(app.staticTexts["captures-empty"].waitForExistence(timeout: 10))
+
+        let field = app.textViews["capture-input"].exists ? app.textViews["capture-input"] : app.textFields["capture-input"]
+        field.tap()
+        field.typeText("Ask Sam about the plant swap")
+        app.buttons["capture-save"].tap()
+
+        let row = app.staticTexts["Ask Sam about the plant swap"]
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
+
+        row.swipeLeft()
+        app.buttons["Dismiss"].tap()
+        XCTAssertTrue(row.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["captures-empty"].waitForExistence(timeout: 5))
+    }
 }

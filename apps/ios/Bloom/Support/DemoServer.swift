@@ -23,6 +23,7 @@ nonisolated final class DemoServer: ClientTransport, Sendable {
     private struct State {
         var tasks: [BloomTask]
         var messages: [BloomMessage]
+        var captures: [BloomCapture] = []
         var counter = 0
     }
 
@@ -70,6 +71,37 @@ nonisolated final class DemoServer: ClientTransport, Sendable {
             }
             guard let done else { return (HTTPResponse(status: .notFound), nil) }
             return try json(done)
+        case "captures.list":
+            return try json(state.withLock { $0.captures.filter { $0.status == .new } })
+        case "captures.create":
+            let input = try await JSONDecoder().decode(
+                BloomCaptureCreate.self,
+                from: Data(collecting: body ?? HTTPBody(), upTo: 1 << 22)
+            )
+            let now = BloomDate.format(.now)
+            let capture = state.withLock { state in
+                state.counter += 1
+                let capture = BloomCapture(
+                    id: "demo-capture-\(state.counter)", kind: input.kind, payload: input.payload,
+                    transcript: nil, status: .new, routedTo: nil, createdAt: now, updatedAt: now
+                )
+                state.captures.append(capture)
+                return capture
+            }
+            return try json(capture)
+        case "captures.update":
+            let patch = try await JSONDecoder().decode(
+                Components.Schemas.CaptureUpdate.self,
+                from: Data(collecting: body ?? HTTPBody(), upTo: 1 << 16)
+            )
+            let id = request.path?.split(separator: "/").last.map(String.init) ?? ""
+            let updated: BloomCapture? = state.withLock { state in
+                guard let index = state.captures.firstIndex(where: { $0.id == id }) else { return nil }
+                if let status = patch.status { state.captures[index].status = status }
+                return state.captures[index]
+            }
+            guard let updated else { return (HTTPResponse(status: .notFound), nil) }
+            return try json(updated)
         case "messages.send":
             let payload = try await JSONDecoder().decode(
                 Components.Schemas.SendMessage.self,

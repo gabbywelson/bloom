@@ -10,11 +10,13 @@ final class Workspace {
     let api: BloomAPI
     let chat: ChatModel
     let tasks: TasksModel
+    let captures: CapturesModel
 
     init(api: BloomAPI, onUnauthorized: @escaping () -> Void) {
         self.api = api
         let tasks = TasksModel(api: api, onUnauthorized: onUnauthorized)
         self.tasks = tasks
+        captures = CapturesModel(api: api, onUnauthorized: onUnauthorized)
         chat = ChatModel(
             api: api,
             onTasksChanged: { Task { await tasks.refresh() } },

@@ -18,11 +18,28 @@ public struct SessionStore: TokenProvider, @unchecked Sendable {
         self.defaults = defaults
     }
 
-    /// The app's own store.
-    public static let standard = SessionStore(
-        keychain: KeychainItem(service: "dev.bloom.session", account: "bearer"),
-        defaults: .standard
-    )
+    /// Info.plist key naming the Keychain access group shared with extensions
+    /// (`$(AppIdentifierPrefix)dev.bloom.shared`).
+    public static let keychainGroupKey = "BloomKeychainGroup"
+    /// Info.plist key naming the app group whose defaults hold the server origin.
+    public static let appGroupKey = "BloomAppGroup"
+
+    /// The session shared by the app and its extensions (share sheet, widget,
+    /// intents): the Keychain access group and app group come from the
+    /// running bundle's Info.plist, so each target reads the same entries.
+    /// Without those keys (unit tests of other bundles) it falls back to the
+    /// process's own Keychain and standard defaults.
+    public static var shared: SessionStore { make(bundle: .main) }
+
+    static func make(bundle: Bundle) -> SessionStore {
+        let info = bundle.infoDictionary ?? [:]
+        let group = (info[keychainGroupKey] as? String).flatMap { $0.isEmpty ? nil : $0 }
+        let suite = (info[appGroupKey] as? String).flatMap { $0.isEmpty ? nil : $0 }
+        return SessionStore(
+            keychain: KeychainItem(service: "dev.bloom.session", account: "bearer", accessGroup: group),
+            defaults: suite.flatMap(UserDefaults.init(suiteName:)) ?? .standard
+        )
+    }
 
     public var serverURL: URL? { defaults.url(forKey: Self.serverKey) }
 

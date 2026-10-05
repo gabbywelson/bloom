@@ -23,7 +23,7 @@ final class AppModel {
 
     static let defaultServer = "http://localhost:3000"
 
-    init(session: SessionStore = .standard) {
+    init(session: SessionStore = .shared) {
         self.session = session
         if ProcessInfo.processInfo.arguments.contains("-BloomResetSession") {
             session.clear()

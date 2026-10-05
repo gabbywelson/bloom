@@ -48,10 +48,21 @@ targets:
       - path: Bloom
     dependencies:
       - target: BloomKit
+      - target: BloomShare
+    entitlements:
+      path: Bloom/Bloom.entitlements
+      properties:
+        &sharedEntitlements # The session token and server are shared with the extensions (ADR 0020).
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)dev.bloom.shared
+        com.apple.security.application-groups:
+          - group.dev.bloom
     info:
       path: Bloom/Info.plist
       properties:
         CFBundleDisplayName: Bloom
+        BloomKeychainGroup: $(AppIdentifierPrefix)dev.bloom.shared
+        BloomAppGroup: group.dev.bloom
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen:
@@ -81,6 +92,47 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         # The app target is UI code: isolate it to the main actor by default
         # (SE-0466). BloomKit stays nonisolated.
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+
+  BloomShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: BloomShare
+    dependencies:
+      - target: BloomKit
+        embed: false
+    entitlements:
+      path: BloomShare/BloomShare.entitlements
+      properties: *sharedEntitlements
+    info:
+      path: BloomShare/Info.plist
+      properties:
+        CFBundleDisplayName: Bloom
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        BloomKeychainGroup: $(AppIdentifierPrefix)dev.bloom.shared
+        BloomAppGroup: group.dev.bloom
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsWebPageWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsImageWithMaxCount: 1
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSExceptionDomains:
+            ts.net:
+              NSIncludesSubdomains: true
+              NSExceptionAllowsInsecureHTTPLoads: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.bloom.app.share
+        PRODUCT_NAME: BloomShare
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         SWIFT_APPROACHABLE_CONCURRENCY: YES
 

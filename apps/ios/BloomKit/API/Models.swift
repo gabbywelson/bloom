@@ -13,6 +13,10 @@ public typealias BloomMessagePart = Components.Schemas.MessagePart
 public typealias BloomUiComponent = Components.Schemas.UiComponent
 public typealias BloomUser = Components.Schemas.AuthUser
 public typealias ChatStreamEvent = Components.Schemas.ChatStreamEvent
+public typealias BloomCapture = Components.Schemas.Capture
+public typealias BloomCaptureKind = Components.Schemas.CaptureKind
+public typealias BloomCaptureStatus = Components.Schemas.CaptureStatus
+public typealias BloomCaptureCreate = Components.Schemas.CaptureCreate
 
 /// Timestamps travel as ISO-8601 strings with milliseconds (`DateTime.formatIso`).
 public enum BloomDate {

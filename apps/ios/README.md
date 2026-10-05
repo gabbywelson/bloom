@@ -12,6 +12,7 @@ directly.
 | `Bloom/`       | The app target: `App/` (entry, root view), resources                     |
 | `BloomKit/`    | Framework shared by the app and its extensions: design system, API, auth |
 | `BloomKit/API` | `openapi.json` (symlink), generator config, `BloomAPI` facade, SSE       |
+| `BloomShare/`  | Share extension: files links, text and photos as captures (ADR 0020)     |
 | `BloomTests/`  | Unit tests (Swift Testing), hosted in the app                            |
 | `BloomUITests` | UI tests (XCTest)                                                        |
 
@@ -97,6 +98,12 @@ warnings; treat any as a bug in the document.
 - **Tasks** tab: open tasks (inbox, next, scheduled, waiting) with "Done"
   (button or swipe). It refreshes when a chat run reports `tasks_changed`,
   on pull-to-refresh and after completing one. The tab badge is the count.
+- **Captures** tab: new captures, newest first, with a field to jot one
+  down; swipe to dismiss. Links open in the browser; photos show a thumbnail.
+- **Share sheet**: "Bloom" in any app's share sheet saves the link (with the
+  page title), text or photo as a capture, with an optional note. It uses the
+  app's session (shared Keychain group and app group, ADR 0020); sign in to
+  the app first.
 - **Settings** (gear): who is signed in, the server, sign out.
 
 ## Demo mode (UI tests)
