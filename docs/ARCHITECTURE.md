@@ -1,180 +1,214 @@
-## Architecture overview
+# Architecture
 
-One long-running Bun server owns everything: the API, the agent runtime, the event pipeline, and background workers. Clients are thin. Postgres is the only state.
+This document describes what is actually built as of the Phase 0 skeleton
+(2026-10-04). The product intent lives in `VISION.md`; individual decisions
+live in `adrs/`. Where this file and an ADR disagree, the ADR is newer.
 
-![architecture diagram](./planning/Architecture_v1.png "Architecture Diagram from Claude on the web")
+## Shape
 
-Clients talk only to the API. Integrations feed events into the pipeline, which uses the agent runtime to write nudges and pushes them back to clients. Workers run the schedules and pollers that keep events flowing.
-
-## Tech stack
-
-The stack is TypeScript end to end on the server, Svelte on the web, and Swift on Apple devices, with Postgres as the single source of truth.
-
-| Layer          | Choice                                                                      | Why                                                                                            |
-| -------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Runtime        | Bun **(decided)**                                                           | Comfort zone, fast, good for agent tooling                                                     |
-| Core framework | Effect **(decided, pending a spike)**                                       | Typed errors, retry schedules, Layers for swappable models and sources, built-in OpenTelemetry |
-| HTTP / RPC     | `@effect/platform` HttpApi                                                  | One typed API definition generates server handlers, a TS client, and an OpenAPI spec for Swift |
-| Database       | Postgres on PlanetScale                                                     | Already paid for; good UI. Drizzle or Effect SQL for queries                                   |
-| Job queue      | pg-boss (Postgres-backed)                                                   | No Redis. Schedules, retries, and singleton jobs for nudges and ingestion                      |
-| Web client     | SvelteKit (Svelte 5 runes)                                                  | Fun is allowed. Wire in Svelte's LLM docs and MCP server to keep agents on runes syntax        |
-| Apple clients  | SwiftUI **(decided)**                                                       | Required for HealthKit, share sheet, Lock Screen capture, App Intents, widgets                 |
-| Auth           | Better Auth with passkeys                                                   | Single user; also issues tokens for the iOS app later                                          |
-| Inference      | Provider-agnostic model layer                                               | Sign in with ChatGPT for conversation; API key fallback; Jev for triage decisions              |
-| Observability  | OpenTelemetry → Langfuse (self-hosted) + a trace backend                    | Replay exactly why Bloom said or did something                                                 |
-| Hosting        | Backend on the home Linux server via Tailscale; Railway as the cloud option | Long-running workers don't fit Vercel or Workers                                               |
-
-**Effect spike before committing.** Spend one session building the model-provider Layer and one pg-boss job in Effect. If it feels like fighting the framework, fall back to plain TS with `neverthrow` and keep the same module boundaries.
-
-## Repo structure
-
-Use a Bun workspaces monorepo. The domain and API contract live in shared packages, so the server, web, and (later) a generated Swift client never drift.
+One long-running Bun process (`apps/server`) owns everything: the HTTP API,
+auth, the agent runtime, scheduled jobs and telemetry export. Clients are
+thin and talk only to the API. Postgres is the only state. Everything on the
+server is Effect: services are `Context.Service` tags, wiring is Layers,
+errors are tagged, every service method has a span.
 
 ```
-bloom/
-  apps/
-    server/          # Bun + Effect: HTTP API, agent runtime, workers
-    web/             # SvelteKit PWA
-    ios/             # Xcode project (Phase 3+), not part of Bun workspaces
-  packages/
-    domain/          # Effect Schema: entities, events, IDs, shared types
-    api/             # HttpApi definition (single source of truth for the contract)
-    db/              # schema, migrations, repositories
-    agent/           # model layer, tools, prompt assembly, soul doc loader
-    integrations/    # one module per source: google, obsidian, healthkit, simplefin, reader, linear
-    pipeline/        # event ingestion, triage, interruption policy, nudge delivery
-  docs/
-    VISION.md
-    ARCHITECTURE.md
-    SOUL.md          # Bloom's persona; loaded at runtime, versioned in git
-    decisions/       # ADRs, one file per decision
-  CLAUDE.md
+browser (SvelteKit SPA, :5173 in dev)
+   │  same origin: Vite proxies /api → :3000  (ADR 0004)
+   ▼
+apps/server (Bun + Effect)                         ┌──────────────┐
+   /api/auth/*  → Better Auth (passkeys, magic link) │ OTel collector│→ Jaeger
+   /api/*       → HttpApi handlers ──┐               │   :4318       │→ Langfuse
+   /*           → static web build   │ spans/logs ──▶└──────────────┘
+                                     ▼
+            AgentRunner ─ ModelProvider ─ Anthropic / OpenAI
+                 │
+            domain services (Task, Thread, Message, EventSink)
+                 │
+            Postgres (migrations, repos, pg-boss schema)
 ```
 
-Rules: `apps/*` depend on `packages/*`, never the reverse. `integrations/*` never import from `agent/`; they produce events and expose tools through interfaces defined in `domain/`.
+## Repo layout
 
-## Core data model
+```
+apps/
+  server/      Bun + Effect process: config, auth, http groups, jobs, main.ts, cli/
+  web/         SvelteKit 3 + Svelte 5 runes SPA (adapter-static, PWA, Playwright e2e)
+packages/
+  domain/      Effect Schema entities (Model.Class), branded ids, unions, service tags
+  api/         HttpApi contract, Authorization middleware tag, derived client, openapi.json
+  db/          migrations, repositories, DB-backed service Layers, migrate/seed scripts
+  agent/       ModelProvider + providers, routing, SOUL loader, context assembly, tools, runner
+  pipeline/    scheduled jobs (heartbeat), interruption policy v1
+  integrations/ Integration interface + registry (empty today)
+docs/          VISION, ARCHITECTURE (this), SOUL.md, adrs/
+docker/        OTel collector config, Postgres init SQL
+repos/         vendored reference sources (Effect 4), read-only
+```
 
-The agent operates over structured domain objects, not chat transcripts. Chat is one input among many. Get this layer right first; everything else hangs off it.
+Dependency rules: `apps/*` import `packages/*`, never the reverse.
+`integrations` never imports `agent`. Agent tools mutate state only through
+the domain service tags. `domain` depends on `effect` alone.
 
-| Entity    | What it is                                         | Key fields                                                                                                           |
-| --------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `Task`    | A thing to do once                                 | title, notes, status, due, scheduled\_for, effort (spoons), energy\_kind, area, source, parent\_id                   |
-| `Routine` | A recurring task or self-care habit                | recurrence rule, flexibility window, last\_done, streak policy (forgiving by default)                                |
-| `Chore`   | Household routine with a cadence                   | cadence, last\_done, owner, rough effort                                                                             |
-| `Area`    | Life domain grouping                               | name (Home, Health, Money, Projects, Self)                                                                           |
-| `Capture` | Raw input before triage                            | kind (text, voice, share, image), payload, transcript, status (new, routed, dismissed), routed\_to                   |
-| `Item`    | A saved link after triage                          | kind (article, product, recipe, idea), url, title, why\_saved, destination (reader, considering, project), decay\_at |
-| `Thread`  | A conversation                                     | kind (main, side, quest), parent\_thread\_id, topic, context\_scope, status                                          |
-| `Message` | One turn in a thread                               | role, content parts (text, image, ui\_component), tool calls                                                         |
-| `Event`   | Anything that happened that Bloom might care about | source, type, occurred\_at, payload, dedupe\_key                                                                     |
-| `Nudge`   | A proactive message Bloom decided to send          | trigger\_event\_id, reasoning, channel, actions, sent\_at, outcome (done, snoozed, dismissed, ignored)               |
-| `Memory`  | Durable facts about Gabby                          | statement, source, confidence, sensitivity tier, last\_confirmed                                                     |
-| `CheckIn` | Energy and mood snapshot                           | spoons available, note, at                                                                                           |
+## Stack as built
 
-**Design rules**
+| Layer       | Choice                                    | Notes                                                                                                                                                                            |
+| ----------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime     | Bun 1.3                                   | Scripts run from the repo root so `.env` loads                                                                                                                                   |
+| Framework   | Effect 4.0.0                              | `effect/http-api`, `effect/sql`, `effect/ai`, `effect/observability` from core; `@effect/platform-bun`, `@effect/sql-pg`, `@effect/ai-anthropic`, `@effect/ai-openai` (ADR 0002) |
+| Database    | Postgres 17 (docker)                      | `effect/sql` + `Model.Class` variants, no ORM (ADR 0002, 0009, 0012)                                                                                                             |
+| Jobs        | pg-boss 12                                | schema `pgboss`, one queue per job (ADR 0015)                                                                                                                                    |
+| Auth        | Better Auth 1.7 + `@better-auth/passkey`  | CLI-issued magic link bootstraps the first session (ADR 0003)                                                                                                                    |
+| Web         | SvelteKit 3, Svelte 5 runes, Vite 8       | SPA mode, service worker, manifest (ADR 0016)                                                                                                                                    |
+| Models      | `effect/ai` LanguageModel                 | Opus 5.5 for conversation, Haiku 4.5 for cheap runs (ADR 0008, 0013)                                                                                                             |
+| Telemetry   | OTLP/HTTP to a local collector            | fan-out to Jaeger and Langfuse (ADR 0005, 0010)                                                                                                                                  |
+| Lint/format | Oxlint (Effect presets) + Oxfmt, Lefthook | ADR 0001                                                                                                                                                                         |
+| Tests       | `bun test`                                | in-memory Layers for domain/api/agent; real Postgres (`bloom_test`) for db                                                                                                       |
 
-- Every agent-visible mutation goes through domain services, never raw SQL from a tool. That's how Bloom gets an audit log for free.
-- `Nudge.outcome` is training data for the interruption policy. Record it from day one.
-- Sensitivity tiers on `Memory` and sources: `normal`, `private` (finance, health), `restricted` (therapy notes). Tier controls what enters a model context by default.
-- Import Spoonful's spoon and energy concepts as fields, not as a separate subsystem.
+## Data model (as implemented)
 
-## Agent runtime and model layer
+All entities are `Model.Class` declarations in `packages/domain` with three
+database variants (`select`/`insert`/`update`) and three JSON variants
+(`json`/`jsonCreate`/`jsonUpdate`). Ids are branded UUIDv7 strings generated
+by `Entity.insert.makeEffect`. Timestamps are `DateTime.Utc` in code, `Date`
+in the database, ISO strings on the wire. Server-managed timestamps never
+appear in client create/update payloads. Tables add a `seq` identity column
+used as the ordering tiebreaker (ADR 0012).
 
-Own the agent loop. It's short, and a coding harness's assumptions (filesystem, bash, long interactive sessions) are wrong for Bloom. Runs are short and frequent, triggered by schedules and events as often as by Gabby typing.
+| Entity        | Fields (abridged)                                                                                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Task`        | title, notes, status (inbox/next/scheduled/waiting/done/dropped), due, scheduledFor, effort 1–5, energyKind, area, source, parentId, completedAt |
+| `Thread`      | kind (main/side/quest), parentThreadId, topic, contextScope (full/minimal; side defaults to minimal), status, lastMessageAt                      |
+| `Message`     | threadId, role, parts (jsonb array of `MessagePart`), runId                                                                                      |
+| `MessagePart` | `text`, `image`, `tool_call`, `tool_result`, `ui_component` (discriminated on `type`)                                                            |
+| `UiComponent` | `option_picker`, `task_card`, `confirm`, `snooze_picker` (discriminated on `kind`)                                                               |
+| `Event`       | source, type, occurredAt, payload (jsonb), dedupeKey (partial unique); append-only                                                               |
+| `Nudge`       | triggerEventId, body, reasoning, channel, actions (non-empty), sentAt, outcome, outcomeAt, messageId                                             |
+| `Capture`     | kind (text/voice/share/image), payload, transcript, status, routedTo                                                                             |
 
-**Model layer.** Define a `ModelProvider` Effect service with one interface: `generate`, `stream`, and `decide`. Each implementation is a Layer:
+Not yet modelled: Routine, Chore, Area, Item, Memory, CheckIn (listed in
+VISION and the brief; deferred past Phase 0).
 
-- `ChatGptPlanProvider` uses Sign in with ChatGPT for conversational turns. It must handle cap exhaustion by failing over cleanly.
-- `ApiKeyProvider` (OpenAI and/or Anthropic) is the fallback, and the default for background runs so they don't silently drain the plan.
-- `DecisionProvider` handles typed, high-frequency judgments. Start with a cheap LLM plus structured output; swap in Jev once early access is sorted.
+Domain **service tags** (`TaskService`, `ThreadService`, `MessageService`,
+`EventSink`) are declared in `domain` with in-memory Layers for tests and
+implemented in `db`. Every task mutation writes an audit `Event`
+(`source: "domain"`) in the same transaction. `ChatStreamEvent` is the SSE
+contract between server and clients.
 
-Routing is a static config table keyed by task type (`conversation`, `triage`, `plan`, `summarize`, `side_thread`), not a model.
+## How a message flows (read this in ten minutes)
 
-**Context assembly.** Each run builds its context from:
+1. **Browser.** The page holds one `ManagedRuntime` built from
+   `BloomClient.layer()` (ADR 0016). Pressing send calls
+   `client.messages.send({ params: { id: threadId }, payload: { text } })`.
+   The derived client encodes the request from the same `HttpApi` value the
+   server implements; there are no hand-written fetches (ADR 0007). The
+   request goes to `/api/threads/:id/messages` on the same origin; in dev
+   Vite proxies it to the Bun server, carrying the Better Auth session
+   cookie.
 
-1. `SOUL.md` (always).
-2. A compact "today" snapshot: calendar, due tasks, the latest check-in.
-3. Relevant memories filtered by sensitivity tier.
-4. Thread history (side threads get a minimal scope by default).
-5. Tool definitions for the run type.
+2. **HTTP.** `HttpRouter.serve` opens the request span (`http.server POST`).
+   The route belongs to the `messages` group, which carries the
+   `Authorization` middleware. The middleware forwards only the cookie header
+   to Better Auth's `getSession` (5 s timeout, `auth.session` span) and
+   provides `CurrentUser`, or fails with a 401 `Unauthorized`.
 
-Log the assembled context per run, so any reply can be replayed.
+3. **Handler.** The `messages.send` handler confirms the thread exists
+   (`ThreadService.get`, 404 otherwise) and returns the `Stream` from
+   `AgentRunner.run({ threadId, text })`. Because the endpoint's success
+   schema is `HttpApiSchema.StreamSse({ data: ChatStreamEvent })`, the
+   framework encodes each event as an SSE `data:` line and streams it.
 
-**Tools.** Domain tools (create or update task, log a check-in, file a capture) and integration tools (search email, read a calendar day, query notes). Mutating tools on external systems (sending email, launching a coding agent) require a confirmation step surfaced as UI, never auto-executed.
+4. **Runner** (`packages/agent/src/runner.ts`, span `agent.run`).
+   Appends the user message through `MessageService`, loads the last 40
+   messages (6 for side threads), and asks `ContextAssembler` for a prompt:
+   `SOUL.md` as the system prompt, a "now" line, then the history mapped to
+   `effect/ai` `Prompt` messages, including prior tool calls and results. It
+   creates the assistant `Message` row with empty parts and emits
+   `message_start`.
 
-**Generative UI.** Messages can carry typed `ui_component` parts (option picker, task card, confirm or cancel, snooze picker) rendered natively by each client. Define these in `packages/domain` as Effect Schemas so web and Swift share one contract.
+5. **Model.** `ModelProvider.stream({ runType: "conversation", prompt,
+toolkit })` looks up the routing table (ADR 0008), delegates to
+   `ApiKeyProvider`, which runs `LanguageModel.streamText` against
+   `claude-opus-5-5` through `@effect/ai-anthropic`. The provider emits the
+   `gen_ai.*` span that Langfuse understands. Text deltas become
+   `text_delta` events. If the model calls `create_task`, `effect/ai` runs
+   the toolkit handler, which decodes the arguments with `Task.jsonCreate`
+   and calls `TaskService.create(input, "agent")`; the runner emits
+   `tool_call`, `tool_result` and `tasks_changed`, appends the round's parts
+   to the prompt, and calls the model again (at most 4 rounds).
 
-**SOUL.md** should cover:
+6. **Persistence.** `TaskService.create` (db implementation) inserts the
+   task and a `task.created` audit `Event` in one transaction. When the
+   stream ends, the runner replaces the assistant message's parts with the
+   accumulated text and tool parts, touches the thread's `lastMessageAt`,
+   and emits `message_end` carrying the persisted message. On a model
+   failure it persists the partial parts, emits a calm `error` event, then
+   fails the stream; the handler ends the SSE response cleanly (ADR 0013).
 
-- Voice: warm, calm, plain words, light humor, no exclamation-mark cheerfulness.
-- Values: "us vs. the problem," progress over perfection, respect for Gabby's energy on a given day.
-- How Bloom disagrees: names the concern once, asks a curious question, offers an alternative, then respects the decision.
-- What Bloom never does: guilt, shame, streak-loss drama, fake urgency, or unprompted commentary on sensitive topics.
-- Initiative: volunteers ideas and observations, but within the interruption budget.
+7. **Browser again.** `sendMessage` folds each event through the pure
+   reducer in `src/lib/chat.ts`: an empty assistant bubble on
+   `message_start`, text accumulating on `text_delta`, tool parts rendered as
+   quiet "used create_task" lines, a task-list refetch on `tasks_changed`,
+   and the final message swapped in on `message_end`.
 
-## Proactivity and nudges
+8. **Trace.** Every span above shares the trace started in step 2:
+   `http.server POST` → `auth.session` → `agent.run` → `AgentRunner.turn` →
+   the model span → `TaskService.create` → `sql.transaction` → `sql.execute`.
+   The server exports to the OTel collector, which fans out to Jaeger
+   (http://localhost:16686, query API `/api/v3/traces`) and, when the
+   `langfuse` profile is up, to Langfuse (ADR 0005, 0010).
 
-Proactivity is the product, so the event pipeline is a first-class subsystem, not a cron afterthought. Every nudge has to pass an explicit interruption policy.
+## Auth
 
-**Pipeline stages**
+Single user, passkeys only. `bun run db:seed` inserts the owner row in Better
+Auth's `user` table. `bun run auth:link` asks Better Auth for a magic link
+and prints it; the server never prints links. Opening it creates a session
+and lands on `/passkeys`, where the device registers a passkey. `/login`
+offers passkey sign-in with WebAuthn conditional UI. Runtime user creation
+is blocked (`disableSignUp` plus a database hook). Everything auth lives
+under `/api/auth`; all other API groups except `health` require a session
+(ADR 0003, 0004, 0015).
 
-1. **Ingest.** Sources write `Event` rows: webhooks (Gmail push, Calendar watch channels), pollers (SimpleFIN, Obsidian vault diff), client uploads (HealthKit, captures), and internal timers (routine due, decay sweep). `dedupe_key` makes ingestion idempotent.
-2. **Triage.** The decision model classifies each event: ignore, record silently, or candidate for a nudge. This is cheap and high-volume, which is why Jev fits here.
-3. **Policy.** Candidates go through the interruption policy (below). Most die here, and that's correct.
-4. **Compose.** For survivors, the conversational model writes the nudge in Bloom's voice, with one to three actions attached.
-5. **Deliver.** Choose a channel (web push, APNs later, an in-app inbox, or a batched digest) and record the `Nudge`.
-6. **Learn.** Record the outcome: done, snoozed, dismissed, or ignored for N hours.
+## Jobs
 
-**Interruption policy (v1, hand-written rules, then tuned)**
+`packages/pipeline` declares `ScheduledJob`s; the server registers each with
+pg-boss (queue, cron schedule, worker). The only job is `heartbeat`
+(`*/5 * * * *`), which ingests a `system/heartbeat` `Event` with a
+minute-bucketed `dedupeKey`, proving the ingest path and idempotency. The
+interruption policy exists as a pure, table-tested function
+(`interruption-policy.ts`, ADR 0011) but is not yet wired to a pipeline
+stage; triage, compose and deliver are not built.
 
-- A daily budget, starting with a single-digit cap. Time-sensitive items (leave now, a meeting in 10 minutes) are exempt but rate-limited.
-- Quiet hours and focus-aware windows: no nudges during calendar events tagged as focus or therapy.
-- Batching: non-urgent candidates roll into a morning or evening digest instead of firing individually.
-- Back-off: a dismissed nudge type gets less frequent; an acted-on one stays.
-- Energy-aware: a low-spoons check-in raises the bar for chore nudges and lowers it for self-care ones.
+## Observability
 
-**Every nudge carries an action.** "Done," "Snooze until tonight," or "Make it smaller." A nudge with nothing to tap is a notification Gabby will learn to ignore.
+Effect's `Otlp.layerJson` exports traces, logs and metrics to
+`OTEL_EXPORTER_OTLP_ENDPOINT`. HTTP spans come from the router, SQL spans
+from `effect/sql`, model spans (`gen_ai.*`) from `effect/ai`, and every
+service method is an `Effect.fn` span. Message content and tokens are never
+logged at info; the runner logs a per-run summary (sizes and scope) only.
 
-## Integrations
+## Development workflow
 
-Each integration has two halves: **tools** (on-demand reads and writes during a run) and **ingestion** (events that feed proactivity). Many only need one half to start.
+```
+bun install            bun run infra:up           bun run db:migrate && bun run db:seed
+bun run dev            bun run auth:link          bun run check
+```
 
-| Source                | Tools                                       | Ingestion                                                         | Notes                                                    | Phase |
-| --------------------- | ------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------- | ----- |
-| Google Calendar       | Read day or week, create or move events     | Watch channels → `Event`                                          | Needed for the "today" snapshot                          | 2     |
-| Gmail                 | Search, read thread, draft reply            | Push notifications via Pub/Sub                                    | Drafts only; never auto-send                             | 2     |
-| Things (one-time)     | —                                           | Import script                                                     | Migrate tasks, then retire Things                        | 1     |
-| Apple Health          | —                                           | iOS app reads HealthKit and syncs summaries                       | Phone-only data; requires the Swift shell                | 3     |
-| Obsidian              | Search and read notes, append to daily note | Vault synced to the server (Syncthing or git), diffed for changes | Index with embeddings; pgvector if available             | 4     |
-| Granola               | Query meeting notes                         | Poll if the API allows                                            | Therapy notes are `restricted`: opt-in per query only    | 4     |
-| Share sheet and links | —                                           | Captures from iOS or the web                                      | Fetch and extract server-side                            | 3–4   |
-| Readwise Reader       | Save, tag, move, archive                    | Optional periodic sync                                            | Reader stays the reading surface; Bloom triages in front | 4     |
-| SimpleFIN Bridge      | Query transactions and balances             | Daily poll                                                        | Purchase nudges; feeds the considering list              | 5     |
-| Linear                | Create issues with context                  | —                                                                 | Project idea capture                                     | 4     |
-| Claude Code / T3 Code | Launch a headless session on a repo         | Completion callback                                               | Always behind explicit confirmation                      | 6     |
-| Web search            | Search and fetch                            | —                                                                 | For side threads and curiosity mode                      | 4     |
-| Home Assistant        | Device state and actions                    | State-change events                                               | Later                                                    | 7     |
+The Vite dev server proxies `/api` to `:3000`. Production serves the static
+build from the Bun server at `/`. `bun run check` runs typecheck (tsgo and
+svelte-check), Oxlint, Oxfmt and every package's tests; db tests create and
+use a `bloom_test` database. The Playwright flow in `apps/web/e2e` is the
+executable form of the Phase 0 done-condition.
 
-Default to official MCP servers for tools where they exist; write direct API clients for ingestion, since MCP doesn't cover webhooks or polling.
+## Deferred from Phase 0
 
-## Auth, security, and observability
-
-**Auth.** Use Better Auth with passkeys for a single user: no sign-up flow, and the account is seeded by a CLI script. Device tokens come later for iOS. Expose the server only over Tailscale until there's a reason not to; the web app can sit behind Tailscale too, or behind Cloudflare Access if it moves to the cloud.
-
-**Secrets.** OAuth tokens for Google, SimpleFIN, and Reader are encrypted at rest in Postgres, with the key held outside the database (an env var on the server, or 1Password CLI). There are no secrets in client bundles.
-
-**Data sensitivity.** Tiers are enforced in context assembly, not by convention:
-
-- `normal`: available to any run.
-- `private` (finance, health): included only when the run type or the user's question needs it.
-- `restricted` (therapy notes): never auto-retrieved. Included only when Gabby explicitly asks in that turn, and preferably routed to a local model.
-
-**Observability.**
-
-- Effect's built-in OpenTelemetry spans on every service call, job, and model request.
-- Langfuse, self-hosted, for LLM traces: assembled context, tool calls, tokens, latency, and cost per run.
-- A debug view in the web app with a "why did Bloom do this?" panel per nudge and message, linking the trace, the triggering event, and the policy decision.
-- Structured logs to stdout; ship them wherever is cheapest later.
-
-**Backups.** Nightly Postgres backups (PlanetScale's plus a `pg_dump` to the home server). This is the system of record for your life; treat it like one.
+- ChatGPT-plan and decision providers are stubs behind the shared
+  interface; triage routes fail with `ProviderUnavailable` until a model is
+  configured (`BLOOM_MODEL_TRIAGE=api_key:claude-haiku-4-5`).
+- Pipeline stages beyond ingest; nudge delivery; web push.
+- Integration toolkits are not merged into the agent's toolkit yet.
+- Routine, Chore, Area, Item, Memory, CheckIn entities; sensitivity tiers
+  are typed but no `Memory` data exists to filter.
+- iOS client; device tokens.
+- The "why did Bloom do this?" debug panel (trace ids are available on
+  every run already).
