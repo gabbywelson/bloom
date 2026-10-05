@@ -23,6 +23,12 @@ still needed to see HTTP, SQL and job spans with full fidelity.
 
 ## Consequences
 
+- Langfuse v4 runs in `events_only` mode: the legacy public read endpoints
+  (`/api/public/traces`, `/observations`, `/metrics`) return 404 by design. Use
+  the UI at http://localhost:3200, or query ClickHouse's `events_core` table
+  (`docker exec bloom-clickhouse-1 clickhouse-client --user clickhouse --password clickhouse -q "SELECT name, type, trace_id FROM default.events_core ORDER BY start_time DESC LIMIT 20"`).
+  Verified 2026-10-04: a chat request's 26 spans arrived as one trace with
+  `LanguageModel.streamText` typed as a GENERATION.
 - Jaeger runs as v2. Its query API is `/api/v3/traces?query.service_name=bloom-server&query.start_time_min=...&query.start_time_max=...`; the legacy `/api/traces` path returns 404.
 
 - Trace IDs match across Jaeger and Langfuse, so a "why did Bloom do this?"
