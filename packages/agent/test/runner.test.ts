@@ -101,6 +101,8 @@ describe("AgentRunner", () => {
       throw new Error("assistant message missing");
     }
     expect(assistant.runId).not.toBeNull();
+    // The agent.run trace id, so the reply can link to its trace (ADR 0024).
+    expect(assistant.traceId).toMatch(/^[0-9a-f]{32}$/);
     expect(assistant.parts.map((part) => part.type)).toEqual(["tool_call", "tool_result", "text"]);
     const call = assistant.parts[0];
     const toolResult = assistant.parts[1];

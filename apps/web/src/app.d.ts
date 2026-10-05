@@ -8,6 +8,11 @@ declare global {
     // interface PageState {}
     // interface Platform {}
   }
+
+  interface ImportMetaEnv {
+    /** Base URL a trace id is appended to (Jaeger's `/trace/`); empty hides trace links. */
+    readonly VITE_TRACE_URL?: string;
+  }
 }
 
 export {};

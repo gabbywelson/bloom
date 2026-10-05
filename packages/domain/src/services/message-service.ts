@@ -63,6 +63,7 @@ export class MessageService extends Context.Service<MessageService, MessageServi
               role: input.role,
               parts: input.parts,
               runId: input.runId ?? null,
+              traceId: input.traceId ?? null,
             })
             .pipe(Effect.orDie),
         );

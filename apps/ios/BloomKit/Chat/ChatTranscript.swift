@@ -8,12 +8,15 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
     public let role: BloomMessageRole
     public var parts: [BloomMessagePart]
     public let createdAt: Date
+    /// The run's trace, once persisted (ADR 0024).
+    public let traceId: String?
 
-    public init(id: String, role: BloomMessageRole, parts: [BloomMessagePart], createdAt: Date) {
+    public init(id: String, role: BloomMessageRole, parts: [BloomMessagePart], createdAt: Date, traceId: String? = nil) {
         self.id = id
         self.role = role
         self.parts = parts
         self.createdAt = createdAt
+        self.traceId = traceId
     }
 
     public init(_ message: BloomMessage) {
@@ -21,7 +24,8 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
             id: message.id,
             role: message.role,
             parts: message.parts,
-            createdAt: message.createdDate ?? .distantPast
+            createdAt: message.createdDate ?? .distantPast,
+            traceId: message.traceId
         )
     }
 

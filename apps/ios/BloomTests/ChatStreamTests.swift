@@ -40,6 +40,7 @@ struct ChatStreamTests {
         }
         #expect(end.message.role == .assistant)
         #expect(end.message.text == "Morning. Nothing urgent today.")
+        #expect(end.message.traceId == nil)
         #expect(end.message.createdDate == BloomDate.parse("2026-10-05T07:30:00.000Z"))
     }
 
@@ -65,6 +66,8 @@ struct ChatStreamTests {
             if case let .uiComponent(ui) = part, case let .taskCard(card) = ui.component { card } else { nil }
         }
         #expect(cards.map(\.title) == ["Water the ferns"])
+        #expect(end.message.traceId == "4bf92f3577b34da6a3ce929d0e0e4736")
+        #expect(ChatMessage(end.message).traceId == "4bf92f3577b34da6a3ce929d0e0e4736")
         #expect(end.message.text == "Added “Water the ferns”.")
     }
 

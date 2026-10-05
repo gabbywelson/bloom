@@ -27,6 +27,8 @@ export class Message extends Model.Class<Message>("Message")({
   role: Immutable(MessageRole),
   parts: Patchable(Schema.Array(MessagePart)),
   runId: Nullable(RunId),
+  /** OpenTelemetry trace of the run that wrote it, for the "why did Bloom do this?" link (ADR 0024). */
+  traceId: Nullable(Schema.String),
   createdAt: Model.DateTimeInsertFromDate,
 }) {
   /** Text content of a message: all `text` parts joined with newlines. */
@@ -44,5 +46,6 @@ export const MessageAppend = Schema.Struct({
   role: MessageRole,
   parts: Schema.Array(MessagePart),
   runId: Schema.optionalKey(Schema.NullOr(RunId)),
+  traceId: Schema.optionalKey(Schema.NullOr(Schema.String)),
 });
 export type MessageAppend = typeof MessageAppend.Type;

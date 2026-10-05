@@ -1899,6 +1899,12 @@
               "null"
             ]
           },
+          "traceId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "createdAt": {
             "type": "string"
           }
@@ -1909,6 +1915,7 @@
           "role",
           "parts",
           "runId",
+          "traceId",
           "createdAt"
         ],
         "additionalProperties": false,

@@ -56,7 +56,7 @@ PORT="$SERVER_PORT" "${runner[@]}" bun run apps/server/src/main.ts >"$LOG_DIR/se
 SERVER_PID=$!
 
 echo "e2e: starting web on :$WEB_PORT (log: $LOG_DIR/web.log)"
-(cd apps/web && bun run dev --port "$WEB_PORT" --strictPort >"$LOG_DIR/web.log" 2>&1) &
+(cd apps/web && BLOOM_API_PROXY="http://localhost:${SERVER_PORT}" bun run dev --port "$WEB_PORT" --strictPort >"$LOG_DIR/web.log" 2>&1) &
 WEB_PID=$!
 
 for i in $(seq 1 60); do

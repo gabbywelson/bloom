@@ -39,6 +39,7 @@ export const MessageServiceDb: Layer.Layer<MessageService, never, SqlClient.SqlC
           role: input.role,
           parts: input.parts,
           runId: input.runId ?? null,
+          traceId: input.traceId ?? null,
         });
         return yield* repo.insert(row);
       }, Effect.orDie);

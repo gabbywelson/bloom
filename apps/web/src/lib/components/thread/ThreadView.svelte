@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { timeLabel } from "../../format";
+  import { timeLabel, traceUrl } from "../../format";
   import type { ChatMessage, UiActionHandler } from "../../types";
   import Flower from "../Flower.svelte";
   import MessageParts from "../MessageParts.svelte";
@@ -63,7 +63,22 @@
         <div class="bubble">
           <MessageParts parts={message.parts} busy={streaming} {onaction} />
         </div>
-        <time class="stamp small muted">{timeLabel(message.createdAt)}</time>
+        <div class="stamp small muted">
+          <time>{timeLabel(message.createdAt)}</time>
+          {#if message.role === "assistant" && message.traceId}
+            {@const href = traceUrl(message.traceId)}
+            {#if href}
+              <a
+                class="trace"
+                {href}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Why did Bloom do this? Open the trace"
+                data-testid="message-trace">trace</a
+              >
+            {/if}
+          {/if}
+        </div>
       </article>
     {/each}
     {#if streaming}
@@ -173,10 +188,22 @@
 
   .stamp {
     padding: 0 var(--space-2);
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .trace {
+    color: var(--color-ink-faint);
+    text-decoration: none;
+  }
+
+  .trace:hover {
+    color: var(--color-ink-muted);
+    text-decoration: underline;
   }
 
   .message[data-role="user"] .stamp {
-    text-align: right;
+    justify-content: flex-end;
   }
 
   .thinking {

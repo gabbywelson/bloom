@@ -24,10 +24,28 @@ struct MessageRow: View {
                 .foregroundStyle(BloomPalette.inkFaint)
                 .padding(.horizontal, BloomSpacing.s2)
         }
+        .contextMenu {
+            if let traceId = message.traceId {
+                // "Why did Bloom do this?": paste into Jaeger (ADR 0024).
+                Button("Copy trace ID", systemImage: "point.3.connected.trianglepath.dotted") {
+                    UIPasteboard.general.string = traceId
+                }
+            }
+            Button("Copy text", systemImage: "doc.on.doc") {
+                UIPasteboard.general.string = textContent
+            }
+        }
         .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
         .padding(isUser ? .leading : .trailing, BloomSpacing.s7)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("message-\(message.role.rawValue)")
+    }
+
+    private var textContent: String {
+        message.parts.compactMap { part in
+            if case let .text(text) = part { text.text } else { nil }
+        }
+        .joined(separator: "\n")
     }
 
     /// A tool call that already has its result shows as one "used …" line.

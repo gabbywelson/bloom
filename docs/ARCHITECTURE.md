@@ -81,7 +81,7 @@ used as the ordering tiebreaker (ADR 0012).
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `Task`        | title, notes, status (inbox/next/scheduled/waiting/done/dropped), due, scheduledFor, effort 1–5, energyKind, area, source, parentId, completedAt |
 | `Thread`      | kind (main/side/quest), parentThreadId, topic, contextScope (full/minimal; side defaults to minimal), status, lastMessageAt                      |
-| `Message`     | threadId, role, parts (jsonb array of `MessagePart`), runId                                                                                      |
+| `Message`     | threadId, role, parts (jsonb array of `MessagePart`), runId, traceId (the run's trace, ADR 0024)                                                 |
 | `MessagePart` | `text`, `image`, `tool_call`, `tool_result`, `ui_component` (discriminated on `type`)                                                            |
 | `UiComponent` | `option_picker`, `task_card`, `confirm`, `snooze_picker` (discriminated on `kind`)                                                               |
 | `Event`       | source, type, occurredAt, payload (jsonb), dedupeKey (partial unique); append-only                                                               |
@@ -236,5 +236,6 @@ executable form of the Phase 0 done-condition.
 - Routine, Chore, Area, Item, Memory, CheckIn entities; sensitivity tiers
   are typed but no `Memory` data exists to filter.
 - Push sending (devices register their APNs tokens; nothing sends yet, ADR 0023).
-- The "why did Bloom do this?" debug panel (trace ids are available on
-  every run already).
+- The "why did Bloom do this?" debug panel: assistant messages carry their
+  trace id and the web links it to Jaeger (ADR 0024); the panel for nudges
+  (trigger event, policy decision) waits for nudges.
