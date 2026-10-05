@@ -31,6 +31,20 @@ bun run auth:link           # prints a one-time sign-in link (15 minutes)
 Open the link, add a passkey on `/passkeys`, and from then on sign in with the
 passkey at `/login`. There is no sign-up flow by design (ADR 0003).
 
+### iPhone (simulator)
+
+Requires Xcode 27 and XcodeGen (`brew install xcodegen`). With the server
+running:
+
+```sh
+bun run ios:build           # generate the Xcode project and build for the simulator
+open apps/ios/Bloom.xcodeproj   # run it, or install the build with xcrun simctl
+xcrun simctl openurl booted "$(bun run auth:link --ios --server http://localhost:3000 2>/dev/null | tail -1)"
+```
+
+Tap **Open** when iOS asks; the app signs in with a bearer token (ADR 0018).
+Details, including a phone on Tailscale, are in `apps/ios/README.md`.
+
 ## Where things are
 
 | Path                    | What                                                                         |

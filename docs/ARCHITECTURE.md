@@ -1,7 +1,7 @@
 # Architecture
 
 This document describes what is actually built as of the Phase 0 skeleton
-(2026-10-04). The product intent lives in `VISION.md`; individual decisions
+(2026-10-04) plus the iOS client and its server support (2026-10-05). The product intent lives in `VISION.md`; individual decisions
 live in `adrs/`. Where this file and an ADR disagree, the ADR is newer.
 
 ## Shape
@@ -13,9 +13,10 @@ server is Effect: services are `Context.Service` tags, wiring is Layers,
 errors are tagged, every service method has a span.
 
 ```
-browser (SvelteKit SPA, :5173 in dev)
-   │  same origin: Vite proxies /api → :3000  (ADR 0004)
-   ▼
+browser (SvelteKit SPA, :5173 in dev)      iPhone (SwiftUI app + share sheet + widgets)
+   │  same origin, cookie (ADR 0004)          │  Authorization: Bearer (ADR 0018)
+   │  Vite proxies /api → :3000               │  generated Swift client (ADR 0017)
+   ▼                                          ▼
 apps/server (Bun + Effect)                         ┌──────────────┐
    /api/auth/*  → Better Auth (passkeys, magic link) │ OTel collector│→ Jaeger
    /api/*       → HttpApi handlers ──┐               │   :4318       │→ Langfuse
@@ -23,7 +24,7 @@ apps/server (Bun + Effect)                         ┌────────�
                                      ▼
             AgentRunner ─ ModelProvider ─ Anthropic / OpenAI
                  │
-            domain services (Task, Thread, Message, EventSink)
+            domain services (Task, Thread, Message, Capture, Device, EventSink)
                  │
             Postgres (migrations, repos, pg-boss schema)
 ```
@@ -167,6 +168,36 @@ POST` (the Anthropic request) → `MessageService.replaceParts` →
    OTel collector, which fans out to Jaeger (http://localhost:16686, query
    API `/api/v3/traces`) and, when the `langfuse` profile is up, to Langfuse
    (ADR 0005, 0010). The Playwright flow asserts this shape.
+
+## The iOS client
+
+`apps/ios` is a SwiftUI app (iOS 26+) described by XcodeGen's `project.yml`;
+`bun run ios:test` generates the project, builds and runs unit and UI tests
+on the simulator. Targets: `Bloom` (app), `BloomKit` (framework shared with
+the extensions: generated API client, models, auth, design system, pure
+logic), `BloomShare` (share extension), `BloomWidgets` (tasks widget and
+capture control), `BloomTests`, `BloomUITests`.
+
+- **Contract.** swift-openapi-generator builds the client from the committed
+  `packages/api/openapi.json` at compile time (ADR 0017). An OpenAPI
+  transform on `BloomApi` makes that document generator-friendly (named
+  components, discriminators, `ChatStreamEvent` components, nullable and
+  one-literal rewrites). `BloomAPI` wraps the generated client and maps
+  errors; only the SSE framing (`ChatStream.events`) and the two Better Auth
+  calls are hand-written. Recorded SSE streams in
+  `packages/api/test/fixtures/chat-stream` are tested on both sides.
+- **Session.** A bearer token from the magic link, in a Keychain access group
+  shared with the extensions, plus the server origin in an app group
+  (ADR 0018, 0020). Any 401 returns to sign-in.
+- **Chat** folds `ChatStreamEvent`s with `ChatTranscript`, the twin of the
+  web's `chat.ts`; `tasks_changed` refreshes the task list and the widget.
+- **Capture** from the share sheet, an in-app field, the "Capture to Bloom"
+  App Intent and the capture control (`POST /api/captures`, ADR 0019, 0022).
+- **Health** sends one private `healthkit` / `daily_summary` event per
+  completed day when enabled (ADR 0021). **Push**: devices register their
+  APNs token behind a Labs flag; nothing sends yet (ADR 0023).
+- **Demo mode** (`-BloomDemo`, debug builds) swaps the transport for an
+  in-process `DemoServer` so UI tests run without a server or a model.
 
 ## Auth
 
