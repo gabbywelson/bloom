@@ -151,12 +151,18 @@ toolkit })` looks up the routing table (ADR 0008), delegates to
    quiet "used create_task" lines, a task-list refetch on `tasks_changed`,
    and the final message swapped in on `message_end`.
 
-8. **Trace.** Every span above shares the trace started in step 2:
-   `http.server POST` → `auth.session` → `agent.run` → `AgentRunner.turn` →
-   the model span → `TaskService.create` → `sql.transaction` → `sql.execute`.
-   The server exports to the OTel collector, which fans out to Jaeger
-   (http://localhost:16686, query API `/api/v3/traces`) and, when the
-   `langfuse` profile is up, to Langfuse (ADR 0005, 0010).
+8. **Trace.** Every span above shares the trace started in step 2. A real
+   run recorded 26 spans in one trace: `http.server POST` → `auth.session` →
+   `Auth.getSession` → `agent.run` → `ThreadService.get` →
+   `MessageService.append` → `MessageService.list` →
+   `ContextAssembler.assemble` → `AgentRunner.turn` → `ModelProvider.stream`
+   → `ApiKeyProvider.stream` → `LanguageModel.streamText` → `http.client
+POST` (the Anthropic request) → `MessageService.replaceParts` →
+   `ThreadService.touch`, each with its `sql.execute` children; a tool round
+   adds `TaskService.create` and `sql.transaction`. The server exports to the
+   OTel collector, which fans out to Jaeger (http://localhost:16686, query
+   API `/api/v3/traces`) and, when the `langfuse` profile is up, to Langfuse
+   (ADR 0005, 0010). The Playwright flow asserts this shape.
 
 ## Auth
 
