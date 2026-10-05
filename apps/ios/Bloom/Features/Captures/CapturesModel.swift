@@ -11,6 +11,8 @@ final class CapturesModel {
     private(set) var loadedOnce = false
     private(set) var saving = false
     private(set) var error: String?
+    /// The capture control asked for the field; the view focuses it and clears this.
+    var focusRequested = false
 
     private let api: BloomAPI
     private let onUnauthorized: () -> Void

@@ -13,6 +13,7 @@ directly.
 | `BloomKit/`    | Framework shared by the app and its extensions: design system, API, auth |
 | `BloomKit/API` | `openapi.json` (symlink), generator config, `BloomAPI` facade, SSE       |
 | `BloomShare/`  | Share extension: files links, text and photos as captures (ADR 0020)     |
+| `BloomWidgets` | Tasks widget and the Capture control (ADR 0022)                          |
 | `BloomTests/`  | Unit tests (Swift Testing), hosted in the app                            |
 | `BloomUITests` | UI tests (XCTest)                                                        |
 
@@ -104,6 +105,12 @@ warnings; treat any as a bug in the document.
   page title), text or photo as a capture, with an optional note. It uses the
   app's session (shared Keychain group and app group, ADR 0020); sign in to
   the app first.
+- **Capture to Bloom** (Siri, Shortcuts, Spotlight, Action button): files
+  a text capture without opening the app.
+- **Widgets**: a Home Screen / Lock Screen widget with the open task count
+  and the next due task (cached for offline), and a Control Center / Lock
+  Screen control that opens Bloom with the capture field focused
+  (`bloom://capture`).
 - **Settings** (gear): who is signed in, the server, sign out, and
   **Apple Health** → "Share daily summaries" (opt-in; ADR 0021): steps, last
   night's sleep and resting heart rate for each completed day, sent as one

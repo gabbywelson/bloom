@@ -33,6 +33,16 @@ struct HomeView: View {
         .sheet(isPresented: $showSettings) { SettingsView() }
         // The badge and the first tab switch should not wait for a visit.
         .task { await workspace.tasks.refresh() }
+        .onChange(of: model.route, initial: true) { _, route in
+            switch route {
+            case .tasks?: tab = .tasks
+            case .capture?:
+                tab = .captures
+                workspace.captures.focusRequested = true
+            case nil: return
+            }
+            model.route = nil
+        }
         // Health summaries go out when the app comes forward (a no-op unless enabled).
         .task(id: scenePhase) {
             if scenePhase == .active { await model.health.sync(api: workspace.api) }

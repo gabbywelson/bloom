@@ -49,6 +49,7 @@ targets:
     dependencies:
       - target: BloomKit
       - target: BloomShare
+      - target: BloomWidgets
     entitlements:
       path: Bloom/Bloom.entitlements
       properties:
@@ -141,6 +142,46 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.bloom.app.share
         PRODUCT_NAME: BloomShare
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+
+  BloomWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: BloomWidgets
+    dependencies:
+      - target: BloomKit
+        embed: false
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    entitlements:
+      path: BloomWidgets/BloomWidgets.entitlements
+      properties:
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)dev.bloom.shared
+        com.apple.security.application-groups:
+          - group.dev.bloom
+    info:
+      path: BloomWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Bloom
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        BloomKeychainGroup: $(AppIdentifierPrefix)dev.bloom.shared
+        BloomAppGroup: group.dev.bloom
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSExceptionDomains:
+            ts.net:
+              NSIncludesSubdomains: true
+              NSExceptionAllowsInsecureHTTPLoads: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.bloom.app.widgets
+        PRODUCT_NAME: BloomWidgets
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         SWIFT_APPROACHABLE_CONCURRENCY: YES
 

@@ -77,6 +77,11 @@ struct CapturesView: View {
             .refreshable { await model.refresh() }
         }
         .task { await model.refresh() }
+        .onChange(of: model.focusRequested, initial: true) { _, requested in
+            guard requested else { return }
+            focused = true
+            model.focusRequested = false
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 import BloomKit
 import Foundation
 import Observation
+import WidgetKit
 
 /// App-wide state: who is signed in, and the API client for their server.
 @Observable
@@ -23,6 +24,15 @@ final class AppModel {
     /// Opt-in Apple Health summaries (ADR 0021); a device preference, not part of the session.
     let health = HealthSync()
 
+    /// Where a link from outside (widget, control, shortcut) wants to go.
+    enum Route: Equatable {
+        case tasks
+        case capture
+    }
+
+    /// Set by `bloom://tasks` and `bloom://capture`; Home consumes it.
+    var route: Route?
+
     static let defaultServer = "http://localhost:3000"
 
     init(session: SessionStore = .shared) {
@@ -38,7 +48,7 @@ final class AppModel {
         if ProcessInfo.processInfo.arguments.contains("-BloomDemo") {
             // UI tests and previews: an in-process server, no Keychain, no network.
             let api = BloomAPI(serverURL: DemoServer.url, tokens: StaticTokenProvider("demo"), transport: DemoServer())
-            workspace = Workspace(api: api) {}
+            workspace = Workspace(api: api, isDemo: true) {}
             phase = .signedIn(DemoServer.user)
             return
         }
@@ -110,10 +120,16 @@ final class AppModel {
         phase = .signedOut
     }
 
-    /// `bloom://sign-in?link=…` opened from outside the app.
+    /// `bloom://sign-in?link=…`, `bloom://tasks` (the widget) and
+    /// `bloom://capture` (the control) opened from outside the app.
     func handle(url: URL) {
-        guard url.scheme == "bloom", url.host() == "sign-in" else { return }
-        Task { await signIn(with: url.absoluteString) }
+        guard url.scheme == "bloom" else { return }
+        switch url.host() {
+        case "sign-in": Task { await signIn(with: url.absoluteString) }
+        case "tasks": route = .tasks
+        case "capture": route = .capture
+        default: break
+        }
     }
 
     /// Revokes the session on the server (best effort) and forgets it here.
@@ -129,5 +145,7 @@ final class AppModel {
         session.clear()
         workspace = nil
         phase = .signedOut
+        TaskSnapshotCache.shared.clear()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }

@@ -1,6 +1,7 @@
 import BloomKit
 import Foundation
 import Observation
+import WidgetKit
 
 /// Open tasks, kept fresh: refetched on appear, on pull-to-refresh, after
 /// completing one, and whenever a chat run reports `tasks_changed`.
@@ -15,10 +16,13 @@ final class TasksModel {
 
     private let api: BloomAPI
     private let onUnauthorized: () -> Void
+    /// Whether refreshes update the widget's cached snapshot (not in demo mode).
+    private let publishesSnapshot: Bool
     private var pendingRefresh = false
 
-    init(api: BloomAPI, onUnauthorized: @escaping () -> Void) {
+    init(api: BloomAPI, publishesSnapshot: Bool = true, onUnauthorized: @escaping () -> Void) {
         self.api = api
+        self.publishesSnapshot = publishesSnapshot
         self.onUnauthorized = onUnauthorized
     }
 
@@ -39,6 +43,7 @@ final class TasksModel {
                 tasks = try await api.tasks(status: BloomTaskStatus.open)
                 error = nil
                 loadedOnce = true
+                publishSnapshot()
             } catch .unauthorized {
                 onUnauthorized()
                 return
@@ -68,5 +73,15 @@ final class TasksModel {
             self.error = "Couldn't mark that done just now."
         }
         return false
+    }
+
+    /// Keeps the Home Screen widget in step with what the app just saw.
+    private func publishSnapshot() {
+        guard publishesSnapshot else { return }
+        let snapshot = TaskSnapshot(tasks: tasks)
+        let cache = TaskSnapshotCache.shared
+        guard cache.load().map({ $0.openCount != snapshot.openCount || $0.next != snapshot.next }) ?? true else { return }
+        cache.save(snapshot)
+        WidgetCenter.shared.reloadTimelines(ofKind: "dev.bloom.tasks")
     }
 }

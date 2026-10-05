@@ -12,9 +12,10 @@ final class Workspace {
     let tasks: TasksModel
     let captures: CapturesModel
 
-    init(api: BloomAPI, onUnauthorized: @escaping () -> Void) {
+    /// `isDemo` keeps demo data out of the widget's shared cache.
+    init(api: BloomAPI, isDemo: Bool = false, onUnauthorized: @escaping () -> Void) {
         self.api = api
-        let tasks = TasksModel(api: api, onUnauthorized: onUnauthorized)
+        let tasks = TasksModel(api: api, publishesSnapshot: !isDemo, onUnauthorized: onUnauthorized)
         self.tasks = tasks
         captures = CapturesModel(api: api, onUnauthorized: onUnauthorized)
         chat = ChatModel(
