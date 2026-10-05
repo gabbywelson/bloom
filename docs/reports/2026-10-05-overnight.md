@@ -167,6 +167,91 @@ Better Auth sessions for the owner from sign-in tests.
   with `-BloomResetSession`, so after `bun run ios:test` the app on that
   simulator is signed out. Expected.
 
+### Entry 4 (23:55, final pass; the backlog is done)
+
+**Landed**
+
+- `366d368fa` Quick capture (ADR 0022): the "Capture to Bloom" App Intent
+  (background, files a text capture with the shared session) published as an
+  App Shortcut; a `BloomWidgets` extension with a tasks widget (small,
+  medium, Lock Screen rectangular and circular: open count and next due
+  task, cached in the app group for offline) and a Control Center / Lock
+  Screen control that opens `bloom://capture`. The app routes
+  `bloom://tasks` and `bloom://capture` and refreshes the widget when its
+  list changes.
+- `2a6ee20ee` Push groundwork (ADR 0023): `Device` with a write-only APNs
+  token, upsert by token, `POST/GET /api/devices`, `DELETE /api/devices/:id`,
+  migration `0004_devices`; iOS Settings → Labs → "Register for push" (off by
+  default). Nothing sends pushes.
+- `f905a210a` Web parity: a `/captures` page (list, dismiss, jot), and
+  assistant messages now carry their run's trace id (migration
+  `0005_message_trace_id`, ADR 0024): the web shows a quiet "trace" link to
+  Jaeger, and iOS has "Copy trace ID". The Vite `/api` proxy target is now
+  `BLOOM_API_PROXY` and `scripts/e2e.sh` passes its server port to it.
+- `11d8372a9` ARCHITECTURE describes the iOS client; README has a simulator
+  quickstart.
+
+**Verified, and how**
+
+- `bun run e2e` (real model, once, after all server changes): Playwright
+  reported "passkey bootstrap, chat round-trip, task creation, and one trace
+  per turn" passing in 17.9 s, `1 passed`.
+- Final `bun run check`: agent 40, api 43, db 18, domain 42, integrations
+  4, pipeline 57, server 40, web 13 (257 tests), typecheck, lint and format
+  clean.
+- Final `bun run ios:test`: `✔ Test run with 54 tests in 11 suites passed`,
+  `Executed 5 tests, with 0 failures` (UI), `** TEST SUCCEEDED **`.
+- Push: simulator permission alert → Allow → a 200 from `POST /api/devices`
+  → one `ios`/`sandbox` row (160 hex chars) in the dev DB; `GET /api/devices`
+  has no token field.
+- Trace link: a real reply in the web app on :5174 linked to
+  `http://localhost:16686/trace/bb4ab438d7b2bf6c0f99391ae14a0723`; Jaeger
+  returned that trace with 26 spans (`http.server POST`, `agent.run`,
+  `ModelProvider.stream`, `LanguageModel.streamText`).
+- Quick capture: `bloom://capture` opens the Captures tab with the field
+  focused; the App Intents metadata lists `CaptureToBloomIntent`, its three
+  phrases and the widget's configuration intent; both extensions are
+  embedded.
+
+**Not verified (tooling, not code)**
+
+- Running "Capture to Bloom" from Siri or Shortcuts, and placing the widget
+  or the control: the simulator automation available tonight drives one app
+  at a time and could not reach SpringBoard's widget gallery.
+- HealthKit posting real numbers: the simulator has no Health data, so only
+  the authorization sheet and the no-op path ran; the arithmetic and the
+  event shape are unit-tested and `/api/events` was checked with curl.
+
+**State left behind**
+
+- The dev database `bloom` has migrations 0003–0005 applied (repair no-op,
+  a `devices` table, `messages.trace_id`), exactly what `bun run dev:server`
+  would do on next start. New rows from tonight: see entry 3, plus one
+  simulator device, one web text capture ("Check the web captures page in
+  the morning") and one short chat exchange ("Quick check from the overnight
+  session…").
+- Model calls tonight: three real turns from the apps plus one e2e run.
+- Servers I started (:3101, :5174) are stopped; the bearer session I minted
+  for curl was revoked and its temp file deleted. The Bloom app in the
+  iPhone 17 (iOS 27.0) simulator is still signed in, pointed at :3101, with
+  Health and push turned on; sign it in again against :3000 to use it.
+- This worktree has a git-ignored `.env` symlink to the main checkout's
+  `.env` (needed to run the server here). Delete it if you prefer.
+- Langfuse stays stopped (entry 2).
+
+**Suggestions for next**
+
+1. Give the agent `complete_task` / `update_task` tools. Tonight Bloom told
+   the user it "can't change a task once added" and asked for the day up
+   front because of that.
+2. Push delivery: an APNs `.p8` key and team id in server config, then send
+   to `DeviceService.list` from the Deliver stage.
+3. Passkeys on iOS once Bloom has an HTTPS domain (ADR 0018 notes how the
+   bearer flow would sit behind it).
+4. Blob storage for image captures before photos pile up (ADR 0019).
+5. Triage for captures (`status: new` → task, Reader, dismissed): the data
+   and API are ready.
+
 ## Morning checklist
 
 - Langfuse is stopped (see incident); `bun run infra:up:langfuse` restores it.
@@ -178,3 +263,8 @@ Better Auth sessions for the owner from sign-in tests.
   simulator, then `xcrun simctl openurl booted "$(bun run auth:link --ios
 --server http://localhost:3000 2>/dev/null | tail -1)"` and tap Open.
 - The task "Look over the Bloom iPhone app" is real and due tomorrow.
+- Skim ADRs 0017–0024; the non-obvious calls are there (generated Swift
+  client and the OpenAPI transform, bearer bootstrap, captures payloads,
+  shared session, HealthKit, quick capture, devices, trace ids).
+- Nothing was pushed. Branch `t3code/5a275e74` holds 19 commits on top of
+  `347b80413`.
