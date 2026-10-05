@@ -11,6 +11,14 @@ struct SignInView: View {
     @FocusState private var linkFocused: Bool
 
     private var busy: Bool { model.phase == .signingIn }
+    private var canSubmit: Bool { !busy && !link.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    /// Return in either field signs in, so the keyboard never hides the way forward.
+    private func submit() {
+        guard canSubmit else { return }
+        linkFocused = false
+        Task { await model.signIn(with: link, serverOverride: server) }
+    }
 
     var body: some View {
         ScrollView {
@@ -44,8 +52,9 @@ struct SignInView: View {
                 .font(.callout)
 
                 VStack(alignment: .leading, spacing: BloomSpacing.s3) {
-                    TextField("bloom://sign-in?link=…", text: $link, axis: .vertical)
-                        .lineLimit(1...4)
+                    TextField("bloom://sign-in?link=…", text: $link)
+                        .submitLabel(.go)
+                        .onSubmit(submit)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.URL)
@@ -58,6 +67,8 @@ struct SignInView: View {
                     DisclosureGroup("Server address", isExpanded: $showServer) {
                         VStack(alignment: .leading, spacing: BloomSpacing.s2) {
                             TextField(model.suggestedServer, text: $server)
+                                .submitLabel(.go)
+                                .onSubmit(submit)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
                                 .keyboardType(.URL)
@@ -75,14 +86,11 @@ struct SignInView: View {
                     .tint(BloomPalette.inkMuted)
 
                     HStack(spacing: BloomSpacing.s3) {
-                        Button {
-                            linkFocused = false
-                            Task { await model.signIn(with: link, serverOverride: server) }
-                        } label: {
+                        Button(action: submit) {
                             Text(busy ? "Signing in" : "Sign in")
                         }
                         .buttonStyle(.bloomPrimary)
-                        .disabled(busy || link.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .disabled(!canSubmit)
                         .accessibilityIdentifier("signin-submit")
 
                         Button("Paste") {

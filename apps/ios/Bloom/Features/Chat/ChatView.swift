@@ -163,6 +163,8 @@ struct Composer: View {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard canSend else { return }
         draft = ""
+        // The composer is locked while Bloom replies; put the keyboard away to watch it.
+        focused = false
         Task {
             // Give the text back if the send never started (no thread yet, say).
             if !(await send(text)), draft.isEmpty, !streaming { draft = text }

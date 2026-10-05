@@ -32,6 +32,15 @@ final class AppModel {
         // Optimistic: a stored session is signed in until the server says otherwise,
         // so the app opens instantly and works with cached data while offline.
         phase = .signedOut
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-BloomDemo") {
+            // UI tests and previews: an in-process server, no Keychain, no network.
+            let api = BloomAPI(serverURL: DemoServer.url, tokens: StaticTokenProvider("demo"), transport: DemoServer())
+            workspace = Workspace(api: api) {}
+            phase = .signedIn(DemoServer.user)
+            return
+        }
+        #endif
         if let server = session.serverURL, session.token != nil {
             workspace = makeWorkspace(server: server)
             phase = .signedIn(

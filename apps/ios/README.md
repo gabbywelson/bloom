@@ -88,6 +88,26 @@ If the generator cannot represent a schema it skips it with a warning, and
 the field silently disappears from Swift. `bun run ios:build` prints those
 warnings; treat any as a bug in the document.
 
+## What the app does
+
+- **Bloom** tab: the main thread. Replies stream in as they are written;
+  the flower opens while Bloom thinks; tool use shows as quiet "used create
+  task" lines; task cards, option pickers, confirms and snooze pickers render
+  natively (choices go back to Bloom as your reply, like the web).
+- **Tasks** tab: open tasks (inbox, next, scheduled, waiting) with "Done"
+  (button or swipe). It refreshes when a chat run reports `tasks_changed`,
+  on pull-to-refresh and after completing one. The tab badge is the count.
+- **Settings** (gear): who is signed in, the server, sign out.
+
+## Demo mode (UI tests)
+
+Debug builds launched with `-BloomDemo` talk to `DemoServer`, an in-process
+`ClientTransport` that answers the generated client with canned data: two
+tasks, a greeting, and a reply stream that creates a task when a message
+starts with "Add ". The UI tests in `BloomUITests/DemoFlowTests.swift` drive
+chat and tasks this way, without a server or a model. It never ships in a
+release build (`#if DEBUG`).
+
 ## Signing
 
 There is no Apple developer team configured yet. The project builds with
