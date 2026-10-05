@@ -1,1 +1,2 @@
-// place files you want to import through the `#lib` alias in this folder.
+// Files in this folder are importable through the `#lib` alias (package.json "imports").
+export * from "./types";

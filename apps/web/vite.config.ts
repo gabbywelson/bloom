@@ -1,4 +1,4 @@
-import adapter from "@sveltejs/adapter-auto";
+import adapterStatic from "@sveltejs/adapter-static";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
 
@@ -11,10 +11,18 @@ export default defineConfig({
           filename.split(/[/\\]/).includes("node_modules") ? undefined : true,
       },
 
-      // adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
-      // If your environment is not supported, or you settled on a specific environment, switch out the adapter.
-      // See https://svelte.dev/docs/kit/adapters for more information about adapters.
-      adapter: adapter(),
+      // Bloom is a single-page app: every route is client-rendered (see
+      // src/routes/+layout.ts) and the Bun server serves this build from "/"
+      // with 200.html as the SPA fallback. See docs/adrs/0004-single-origin-web-and-api.md.
+      adapter: adapterStatic({ fallback: "200.html" }),
     }),
   ],
+
+  server: {
+    // Dev only: the browser talks to one origin. /api (including /api/auth) is
+    // proxied to the Bun server so cookies and passkeys bind to the web origin.
+    proxy: {
+      "/api": { target: "http://localhost:3000", changeOrigin: false },
+    },
+  },
 });
