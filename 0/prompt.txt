@@ -1,0 +1,53 @@
+You are building the iOS client for Bloom, a single-user personal agent app, and improving the server and web app wherever that makes the iOS work better. You are running unattended overnight. Work autonomously, commit as you go, never push, and keep going until the backlog below is exhausted or you have genuinely run out of useful work. Nobody will answer questions until morning: when something is ambiguous, pick the option that a careful colleague would, write an ADR, and move on. When something is blocked, note it in the report and move to the next item.
+
+## Read first (30 minutes, no code yet)
+- CLAUDE.md, docs/VISION.md, docs/ARCHITECTURE.md (has a "how a message flows" walkthrough), every file in docs/adrs/ (0001–0016), docs/SOUL.md, docs/planning/initial-brief.md (sections "Integrations" and "Sequencing": iOS is Phase 3; capture and HealthKit are what make Bloom more than a web to-do app).
+- packages/api/src (the HttpApi contract) and packages/api/openapi.json (committed, regenerate with `bun run openapi`), packages/domain/src (entities; `Capture` and `Event` exist, there is no captures API yet), apps/server/src (auth, http groups, jobs), apps/web/src/lib/api.ts and chat.ts (how the web consumes the SSE chat stream), apps/web/e2e/bloom.spec.ts (the executable done-condition).
+- `git log --oneline` for the history; the repo is public on GitHub, so never commit secrets.
+
+## Environment facts
+- Bun 1.3.14 workspaces; run every script from the repo root (Bun loads `.env` only from cwd). `bun run check` = typecheck + lint + format + all tests; `bun run test` prints one line per package; `bun run e2e` runs the browser flow against a real Opus 5.5 call (passes in ~25 s; costs money, so use it only to confirm server changes, a handful of times).
+- Infra: `bun run infra:up` (Postgres :5432, OTel collector :4318, Jaeger UI :16686). Do NOT start the Langfuse profile tonight. Do NOT run `infra:reset` (wipes the dev database). Docker is OrbStack; if `docker` commands or `pg_isready -h 127.0.0.1` hang, run `orb stop` then `orb start` then `docker compose up -d postgres otel-collector jaeger` and continue (ADR 0010).
+- Server: `bun run dev:server` on :3000; web: `bun run dev:web` on :5173 (proxies /api to :3000). For your own test servers use other ports (31xx / 51xx) and kill what you start.
+- `.env` holds the owner email, `BETTER_AUTH_SECRET` and a working `ANTHROPIC_API_KEY`; never print values. `bun run auth:link` prints a one-time sign-in link for the owner.
+- Jaeger is v2: query `/api/v3/traces?query.service_name=bloom-server&query.start_time_min=…&query.start_time_max=…`.
+- Xcode 27.0 at /Applications/Xcode.app, Swift 6.4, simulators for iOS 26.2, 26.5 and 27.0 with iPhone 17 / 17 Pro / 16e devices (`xcrun simctl list devices available`). Homebrew is available; XcodeGen is not installed yet (`brew install xcodegen` is fine; say so in the commit). No Apple developer signing is set up: build and test on the simulator only.
+- Tooling conventions: Oxlint + Oxfmt (`bunx oxfmt <dir>` before committing TS/Svelte/JSON/MD), Lefthook pre-commit/pre-push hooks run automatically (pre-push needs Postgres up). Effect 4 only on the server; read repos/effect/LLMS.md before writing Effect code and open the vendored source for any unfamiliar API. Svelte 5 runes only. No `any`, no throw, tagged errors, spans on service methods.
+
+## Hard rules
+- Never `git push`. Commit small, descriptive commits; one-line justification for every new dependency.
+- Never edit files under repos/. Never commit `.env`, keys, provisioning profiles, or generated secrets.
+- Keep `bun run check` green at every commit. If you break it and cannot fix it within a reasonable effort, revert that change.
+- apps/* import packages/*, never the reverse. Agent tools mutate state only through domain services. Anything that sends email, spends money or launches code agents returns a confirmation UI component.
+- Record non-obvious decisions as ADRs in docs/adrs/NNNN-title.md (continue the numbering from 0017). Update docs/ARCHITECTURE.md when module boundaries, data flow or the data model change.
+- Every two hours of work, append to docs/reports/2026-10-05-overnight.md: what landed (commit hashes), what is verified and how, what is blocked and why, what to look at in the morning. Write it first thing so it exists even if you stall. This report is the one thing the owner will read first.
+
+## Backlog, in priority order
+Do these in order. Each item ends with its own verification and a commit. If an item is blocked, write down why in the report and continue with the next.
+
+1. **iOS app skeleton (`apps/ios`, SwiftUI, iOS 26 deployment target).** Use XcodeGen (`project.yml`) so the project is reproducible and diff-friendly; never hand-edit the pbxproj. Targets: `Bloom` app, `BloomKit` framework (API client, models, auth), `BloomTests` (unit) and `BloomUITests`. Add `apps/ios/README.md` (generate, build, test commands) and root scripts `ios:generate`, `ios:build`, `ios:test` that run `xcodegen` and `xcodebuild … -destination 'platform=iOS Simulator,name=iPhone 17'`. The app must build and its tests must pass on the simulator from the command line before you commit. Calm, warm visual baseline matching the web (earthy palette, generous spacing, the flower mark with closed/opening/open states). Do not over-design.
+
+2. **Typed Swift client from packages/api/openapi.json.** Prefer Apple's swift-openapi-generator (SPM plugin) so the client is generated, not hand-written, mirroring ADR 0007. If the SSE endpoint (`POST /api/threads/{id}/messages`, `text/event-stream` of `ChatStreamEvent`) is not representable by the generator, hand-write only that one call on `URLSession.bytes` with a Codable `ChatStreamEvent` mirroring packages/domain/src/stream.ts, and say so in an ADR. Unit-test the SSE decoder with recorded event lines (ADR 0013 documents the exact sequence, including `error` being terminal).
+
+3. **Auth for iOS.** Passkeys on iOS need an associated domain over HTTPS, which does not exist yet, so decide and document (ADR) the bootstrap: the recommended path is Better Auth's `bearer` plugin on the server (token returned in a response header after sign-in, sent as `Authorization: Bearer` afterwards, stored in the Keychain) with sign-in via the existing magic link opened from the app (custom URL scheme or universal-link-shaped path handled by the app in the simulator) or a short-lived pairing code endpoint. The server's `Authorization` middleware (apps/server/src/auth/authorization.ts) currently reads only the cookie; extend it to accept a bearer token as well, with tests, and keep cookies working for the web. Add an `auth` section to the iOS README describing the first-run flow. Keep the "no sign-up, single user, runtime user creation blocked" invariant (ADR 0003).
+
+4. **Chat on iOS.** Main-thread view with streamed replies (incremental `text_delta`, tool parts rendered as quiet "used create_task" lines, `message_end` replacing the bubble, `error` shown calmly), composer, the thinking flower while streaming. Verify against the running server with the real model at least once and record the trace id from Jaeger in the report.
+
+5. **Tasks on iOS.** Task list (open statuses), done action, refresh on `tasks_changed`. Match apps/web's behaviour.
+
+6. **Capture API + share sheet.** Domain already has `Capture` (kind text/voice/share/image, payload, transcript, status, routedTo) but no service or API. Add `CaptureService` to packages/domain (tag + layerMemory), its DB implementation in packages/db (+ migration if the table differs from the model; check migrations/0002), a `captures` group in packages/api (`POST /api/captures`, `GET /api/captures?status=new`, `PATCH /api/captures/:id`), server handlers with tests, and regenerate openapi.json. Then an iOS Share Extension that files a URL/text/image as a Capture through the API, and a capture list screen. Keep the web app's typed client compiling (it is derived from the same HttpApi, so additions are safe).
+
+7. **HealthKit summaries → Events.** Add `POST /api/events` (ingest with `dedupeKey`) backed by `EventSink`, with tests. In iOS, request HealthKit authorization for steps, sleep and resting heart rate, compute a daily summary, and post it as an `Event` (`source: "healthkit"`, `type: "daily_summary"`, `dedupeKey: healthkit:<day>`). On the simulator there is no health data: unit-test the summarizer with fixtures and make the sync a no-op when authorization is unavailable.
+
+8. **Quick capture surfaces.** App Intents ("Capture to Bloom") and a Lock Screen / Control Center control if feasible on iOS 26 without a paid signing identity; a Home Screen widget showing open task count and the next due task (reads from the API, caches last values). If signing blocks any of these on the simulator, build what compiles, mark the rest in the report.
+
+9. **Device registration groundwork for push.** `POST /api/devices` storing an APNs token per device (table + domain service + API + iOS registration behind a flag). No actual push sending; nudges are not built yet.
+
+10. **Web app parity items you notice while doing the above** (small, safe): e.g. a `/captures` page listing new captures, surfacing the trace id per assistant message as a debug link to Jaeger (ADR 0005 "why did Bloom do this?"). Only if the earlier items are done.
+
+## How to work
+- Before each item, read the relevant existing code and tests; match their patterns (Effect services + Layers on the server, `Model.Class` variants in domain, HttpApi groups with `decodePayload` for creates per ADR 0014, in-memory layers for tests).
+- Verify everything you claim: run the simulator build and tests, run `bun run check`, curl the new endpoints against a server on a spare port, and for chat use the real model sparingly. Paste the commands you ran and their last lines into the report.
+- Prefer finishing a smaller vertical slice over leaving several items half-done. A half-done item must still leave `bun run check` and the iOS build green.
+- Keep message content and tokens out of logs at info level; keep sensitivity tiers in mind for HealthKit data (it is `private` tier: never put it into model context in this phase).
+- When you finish the backlog or run out of safe work, do a final pass: `bun run check`, `bun run ios:test`, update docs/ARCHITECTURE.md and the report, and stop.
