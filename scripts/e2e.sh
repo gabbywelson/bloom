@@ -27,6 +27,11 @@ fi
 
 echo "e2e: checking infrastructure"
 pg_isready -q -t 5 -h 127.0.0.1 -p 5432 || { echo "Postgres is not reachable on :5432 (bun run infra:up)"; exit 1; }
+for port in "$SERVER_PORT" "$WEB_PORT"; do
+  if lsof -ti "tcp:${port}" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "port ${port} is already in use; stop that process first"; exit 1
+  fi
+done
 curl -s -m 5 -o /dev/null "http://127.0.0.1:16686/" || { echo "Jaeger is not reachable on :16686 (bun run infra:up)"; exit 1; }
 
 echo "e2e: migrate + seed"
@@ -37,6 +42,11 @@ cleanup() {
   echo "e2e: stopping servers"
   [[ -n "${SERVER_PID:-}" ]] && kill "$SERVER_PID" 2>/dev/null || true
   [[ -n "${WEB_PID:-}" ]] && kill "$WEB_PID" 2>/dev/null || true
+  # `bun run dev` spawns vite as a child node process that outlives its parent;
+  # kill whatever still listens on our two ports.
+  for port in "$SERVER_PORT" "$WEB_PORT"; do
+    lsof -ti "tcp:${port}" -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null || true
+  done
   wait 2>/dev/null || true
 }
 trap cleanup EXIT
