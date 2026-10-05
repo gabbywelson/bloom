@@ -13,11 +13,15 @@
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import { magicLink } from "better-auth/plugins";
-import { Pool } from "pg";
+import type { Pool } from "pg";
 
 export interface AuthOptions {
-  /** Postgres connection string. Better Auth owns the user/session/account/verification/passkey tables. */
-  readonly databaseUrl: string;
+  /**
+   * Postgres pool. Better Auth owns the user/session/account/verification/passkey
+   * tables. The caller owns the pool's lifecycle (the server releases it with
+   * its Layer; the CLI config never connects).
+   */
+  readonly database: Pool;
   /** 32+ random bytes, base64. Used for signing cookies and hashing tokens. */
   readonly secret: string;
   /** The browser origin, e.g. http://localhost:5173. Cookies and passkeys bind to it. */
@@ -37,7 +41,7 @@ export const MAGIC_LINK_EXPIRES_IN_SECONDS = 15 * 60;
 export const createAuth = (options: AuthOptions) =>
   betterAuth({
     appName: "Bloom",
-    database: new Pool({ connectionString: options.databaseUrl }),
+    database: options.database,
     secret: options.secret,
     baseURL: options.webOrigin,
     basePath: AUTH_BASE_PATH,

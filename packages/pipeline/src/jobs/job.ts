@@ -6,6 +6,10 @@ import type { Effect } from "effect";
  * The scheduler (pg-boss in apps/server) owns execution; this package only
  * describes jobs, so `run` must handle its own failures and never fail.
  */
+/**
+ * A job's `run` is expected to open its own `job.<name>` span; the server's
+ * scheduler wraps it in `scheduler.run` and does not add a second job span.
+ */
 export interface ScheduledJob<R = never> {
   readonly name: string;
   readonly cron: string;

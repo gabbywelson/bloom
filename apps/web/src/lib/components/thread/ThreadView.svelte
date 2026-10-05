@@ -1,16 +1,26 @@
 <script lang="ts">
-  import type { UiAction, UiMessage } from "../../types";
+  import { timeLabel } from "../../format";
+  import type { ChatMessage, UiActionHandler } from "../../types";
   import Flower from "../Flower.svelte";
   import MessageParts from "../MessageParts.svelte";
 
   interface Props {
-    messages: ReadonlyArray<UiMessage>;
+    messages: ReadonlyArray<ChatMessage>;
+    /** A reply is in flight: the composer is locked and the flower opens. */
     streaming?: boolean;
+    /** Calm, user-facing text for the last failure, or null. */
+    error?: string | null;
     onsend: (text: string) => void;
-    onaction?: (action: UiAction) => void;
+    onaction?: UiActionHandler;
   }
 
-  let { messages, streaming = false, onsend, onaction = () => {} }: Props = $props();
+  let {
+    messages,
+    streaming = false,
+    error = null,
+    onsend,
+    onaction = async () => false,
+  }: Props = $props();
 
   let draft = $state("");
   let list = $state<HTMLElement | null>(null);
@@ -31,45 +41,39 @@
     }
   };
 
-  // Keep the newest message in view as the thread grows.
+  // Keep the newest content in view as the thread grows or streams.
   $effect(() => {
-    void messages.length;
+    void messages;
     void streaming;
     const el = list;
     if (el) el.scrollTop = el.scrollHeight;
   });
-
-  const timeOf = (iso: string) => {
-    const date = new Date(iso);
-    return Number.isNaN(date.getTime())
-      ? ""
-      : date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  };
 </script>
 
 <section class="thread" aria-label="Conversation">
   <div class="messages" bind:this={list}>
-    {#if messages.length === 0}
+    {#if messages.length === 0 && !streaming}
       <div class="empty">
         <Flower state="closed" size={40} />
-        <p class="muted">Quiet for now. Say something whenever you like.</p>
+        <p class="muted">Nothing here yet. Say hi.</p>
       </div>
     {/if}
     {#each messages as message (message.id)}
-      <article class="message" data-role={message.role}>
+      <article class="message" data-role={message.role} data-testid={`message-${message.role}`}>
         <div class="bubble">
-          <MessageParts parts={message.parts} {onaction} />
+          <MessageParts parts={message.parts} busy={streaming} {onaction} />
         </div>
-        <time class="stamp small muted" datetime={message.createdAt}>
-          {timeOf(message.createdAt)}
-        </time>
+        <time class="stamp small muted">{timeLabel(message.createdAt)}</time>
       </article>
     {/each}
     {#if streaming}
-      <div class="thinking">
+      <div class="thinking" data-testid="bloom-thinking">
         <Flower state="opening" size={22} label="Bloom is thinking" />
         <span class="small muted" aria-hidden="true">Bloom is thinking</span>
       </div>
+    {/if}
+    {#if error}
+      <p class="error small" role="alert">{error}</p>
     {/if}
   </div>
   <div class="visually-hidden" aria-live="polite">{streaming ? "Bloom is thinking" : ""}</div>
@@ -86,13 +90,17 @@
       id="composer"
       class="input"
       rows="2"
-      placeholder="What's on your mind?"
+      placeholder={streaming ? "Bloom is replying" : "What's on your mind?"}
+      data-testid="composer-input"
       bind:value={draft}
+      disabled={streaming}
       {onkeydown}
     ></textarea>
     <div class="composer-row">
       <span class="hint small muted">Enter to send, Shift+Enter for a new line</span>
-      <button type="submit" class="btn btn-primary" disabled={!canSend}>Send</button>
+      <button type="submit" class="btn btn-primary" data-testid="composer-send" disabled={!canSend}>
+        Send
+      </button>
     </div>
   </form>
 </section>
@@ -139,7 +147,8 @@
   }
 
   .message[data-role="assistant"],
-  .message[data-role="system"] {
+  .message[data-role="system"],
+  .message[data-role="tool"] {
     justify-self: start;
   }
 
@@ -155,7 +164,8 @@
     border-color: transparent;
   }
 
-  .message[data-role="system"] .bubble {
+  .message[data-role="system"] .bubble,
+  .message[data-role="tool"] .bubble {
     background: transparent;
     border-style: dashed;
     color: var(--color-ink-muted);
@@ -176,6 +186,11 @@
     padding: var(--space-2) var(--space-3);
   }
 
+  .error {
+    color: var(--color-danger);
+    padding: 0 var(--space-3);
+  }
+
   .composer {
     margin: var(--space-2) var(--space-2) var(--space-4);
     padding: var(--space-3);
@@ -191,6 +206,10 @@
     background: transparent;
     padding: var(--space-1);
     line-height: var(--leading);
+  }
+
+  .input:disabled {
+    color: var(--color-ink-muted);
   }
 
   .input:focus-visible {

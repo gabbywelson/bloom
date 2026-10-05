@@ -40,6 +40,11 @@ web build.
   runtime captured at Layer build, inside a `job.<name>` span. A job defect is
   logged and swallowed so pg-boss does not retry it blindly.
   `BLOOM_JOBS_RUN_ON_START=true` sends each job once at boot (dev aid).
+- **Tracing exclusion.** The HTTP tracer is disabled for
+  `GET /api/auth/magic-link/verify`, whose query string carries the token;
+  otherwise `url.full` would export the credential to Jaeger and Langfuse.
+  pg-boss and pg pool shutdowns are bounded by timeouts so a dead database
+  cannot hold SIGINT shutdown open.
 - **Observability.** `Otlp.layerJson` is `provideMerge`d on top of the
   console logger so both loggers stay active. HTTP spans come from
   `HttpRouter.serve`; SQL and model spans from the packages. The local

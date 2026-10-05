@@ -1,13 +1,15 @@
 <script lang="ts">
-  import type { MessagePart, UiAction } from "../types";
+  import type { MessagePart, UiActionHandler } from "../types";
   import UiComponentPart from "./ui/UiComponentPart.svelte";
 
   interface Props {
     parts: ReadonlyArray<MessagePart>;
-    onaction?: (action: UiAction) => void;
+    /** A reply is streaming: generative-UI controls that reply to Bloom are disabled. */
+    busy?: boolean;
+    onaction?: UiActionHandler;
   }
 
-  let { parts, onaction = () => {} }: Props = $props();
+  let { parts, busy = false, onaction = async () => false }: Props = $props();
 
   const paragraphs = (text: string) => text.split(/\n{2,}/).filter((p) => p.trim().length > 0);
 
@@ -23,11 +25,14 @@
     {:else if part.type === "image"}
       <img class="image" src={part.url} alt={part.alt ?? ""} loading="lazy" />
     {:else if part.type === "tool_call"}
-      <p class="tool small muted">used <code>{toolLabel(part.name)}</code></p>
+      <p class="tool small muted">using <code>{toolLabel(part.name)}</code></p>
     {:else if part.type === "tool_result"}
-      <p class="tool small muted">finished <code>{toolLabel(part.name)}</code></p>
+      <p class="tool small muted" data-ok={part.ok}>
+        {part.ok ? "finished" : "could not finish"}
+        <code>{toolLabel(part.name)}</code>
+      </p>
     {:else if part.type === "ui_component"}
-      <UiComponentPart component={part.component} {onaction} />
+      <UiComponentPart component={part.component} {busy} {onaction} />
     {/if}
   {/each}
 </div>
@@ -55,5 +60,9 @@
 
   .tool code {
     font-style: normal;
+  }
+
+  .tool[data-ok="false"] {
+    color: var(--color-danger);
   }
 </style>

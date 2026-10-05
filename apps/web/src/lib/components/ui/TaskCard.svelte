@@ -1,51 +1,50 @@
 <script lang="ts">
-  import type { UiComponentProps } from "./registry";
+  import { dueLabel } from "../../format";
+  import type { TaskCard, UiActionHandler } from "../../types";
 
-  let { component, onaction }: UiComponentProps = $props();
+  interface Props {
+    component: TaskCard;
+    onaction: UiActionHandler;
+  }
 
-  const text = (key: string): string | undefined => {
-    const value = component.props[key];
-    return typeof value === "string" ? value : undefined;
-  };
+  let { component, onaction }: Props = $props();
 
-  const title = $derived(text("title") ?? "Untitled task");
-  const notes = $derived(text("notes"));
-  const due = $derived(text("due"));
-  const area = $derived(text("area"));
-  const effort = $derived(
-    typeof component.props.effort === "number" ? component.props.effort : undefined,
-  );
-
+  /** The completion request is in flight. */
+  let pending = $state(false);
+  /** The server accepted the completion; set only once the handler confirms it. */
   let done = $state(false);
 
-  const act = (action: "done" | "snooze" | "open") => {
-    if (action === "done") done = true;
-    onaction({ id: component.id, payload: { action } });
+  const closed = $derived(done || component.status === "done" || component.status === "dropped");
+
+  const markDone = async () => {
+    if (closed || pending) return;
+    pending = true;
+    try {
+      done = await onaction({ kind: "task_card", taskId: component.taskId, action: "done" });
+    } finally {
+      pending = false;
+    }
   };
 </script>
 
-<article class="task-card" class:done>
+<article class="task-card" class:closed>
   <header class="head">
-    <h3 class="title">{title}</h3>
-    {#if area}
-      <span class="area small">{area}</span>
-    {/if}
+    <h3 class="title">{component.title}</h3>
+    <span class="chip small">{closed ? "done" : component.status}</span>
   </header>
-  {#if notes}
-    <p class="notes muted">{notes}</p>
+  {#if component.due !== null}
+    <p class="meta small muted">Due {dueLabel(component.due)}</p>
   {/if}
-  <p class="meta small muted">
-    {#if due}<span>Due {due}</span>{/if}
-    {#if effort !== undefined}<span>{effort} {effort === 1 ? "spoon" : "spoons"}</span>{/if}
-  </p>
   <div class="actions">
-    <button type="button" class="btn" disabled={done} onclick={() => act("done")}>
-      {done ? "Done" : "Mark done"}
+    <button
+      type="button"
+      class="btn"
+      disabled={closed || pending}
+      aria-busy={pending}
+      onclick={() => void markDone()}
+    >
+      {closed ? "Done" : pending ? "Marking done" : "Mark done"}
     </button>
-    <button type="button" class="btn btn-quiet" disabled={done} onclick={() => act("snooze")}>
-      Snooze
-    </button>
-    <button type="button" class="btn btn-quiet" onclick={() => act("open")}>Open</button>
   </div>
 </article>
 
@@ -55,7 +54,7 @@
     gap: var(--space-2);
   }
 
-  .task-card.done .title {
+  .task-card.closed .title {
     text-decoration: line-through;
     color: var(--color-ink-muted);
   }
@@ -67,16 +66,12 @@
     gap: var(--space-3);
   }
 
-  .area {
+  .chip {
     color: var(--color-ink-muted);
     background: var(--color-sage-soft);
     padding: 0 var(--space-2);
     border-radius: var(--radius-pill);
-  }
-
-  .meta {
-    display: flex;
-    gap: var(--space-3);
+    white-space: nowrap;
   }
 
   .actions {

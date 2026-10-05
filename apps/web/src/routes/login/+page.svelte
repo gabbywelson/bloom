@@ -92,7 +92,13 @@
       </label>
     {/if}
 
-    <button type="button" class="btn btn-primary wide" onclick={signIn} disabled={busy}>
+    <button
+      type="button"
+      class="btn btn-primary wide"
+      data-testid="login-passkey"
+      onclick={signIn}
+      disabled={busy}
+    >
       {busy ? "Waiting for your passkey" : "Sign in with a passkey"}
     </button>
 

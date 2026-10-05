@@ -1,60 +1,54 @@
 <script lang="ts">
-  import type { UiComponentProps } from "./registry";
+  import { dueLabel } from "../../format";
+  import type { SnoozeChoice, SnoozePicker, UiActionHandler } from "../../types";
 
-  let { component, onaction }: UiComponentProps = $props();
-
-  interface Choice {
-    readonly id: string;
-    readonly label: string;
+  interface Props {
+    component: SnoozePicker;
+    /** A reply is streaming; the choice could not be sent yet, so the buttons wait. */
+    busy?: boolean;
+    onaction: UiActionHandler;
   }
 
-  const defaults: ReadonlyArray<Choice> = [
-    { id: "later_today", label: "Later today" },
-    { id: "tomorrow", label: "Tomorrow" },
-    { id: "this_weekend", label: "This weekend" },
-    { id: "next_week", label: "Next week" },
-  ];
+  let { component, busy = false, onaction }: Props = $props();
 
-  const prompt = $derived(
-    typeof component.props.prompt === "string" ? component.props.prompt : "Snooze until",
-  );
-
-  const choices = $derived.by((): ReadonlyArray<Choice> => {
-    const raw = component.props.choices;
-    if (!Array.isArray(raw)) return defaults;
-    const parsed = raw.flatMap((item): Choice[] => {
-      if (!item || typeof item !== "object") return [];
-      const record = item as Record<string, unknown>;
-      return typeof record.id === "string" && typeof record.label === "string"
-        ? [{ id: record.id, label: record.label }]
-        : [];
-    });
-    return parsed.length > 0 ? parsed : defaults;
-  });
-
+  /** The choice whose action is in flight. */
+  let pending = $state<string | null>(null);
+  /** The choice Bloom received; set only once the handler confirms it. */
   let picked = $state<string | null>(null);
 
-  const pick = (choice: Choice) => {
-    picked = choice.id;
-    onaction({ id: component.id, payload: { until: choice.id } });
+  const locked = $derived(busy || pending !== null || picked !== null);
+
+  const pick = async (choice: SnoozeChoice) => {
+    if (locked) return;
+    pending = choice.id;
+    try {
+      if (await onaction({ kind: "snooze_picker", choice })) picked = choice.id;
+    } finally {
+      pending = null;
+    }
   };
 </script>
 
 <div class="snooze">
-  <p class="muted">{prompt}</p>
-  <div class="choices" role="group" aria-label={prompt}>
-    {#each choices as choice (choice.id)}
+  <p class="muted">{component.prompt}</p>
+  <div class="choices" role="group" aria-label={component.prompt}>
+    {#each component.choices as choice (choice.id)}
       <button
         type="button"
-        class="btn"
+        class="btn choice"
         class:picked={picked === choice.id}
         aria-pressed={picked === choice.id}
-        disabled={picked !== null && picked !== choice.id}
-        onclick={() => pick(choice)}
+        aria-busy={pending === choice.id}
+        disabled={locked && picked !== choice.id}
+        onclick={() => void pick(choice)}
       >
-        {choice.label}
+        <span>{choice.label}</span>
+        <span class="small muted">{dueLabel(choice.until)}</span>
       </button>
     {/each}
+    {#if component.choices.length === 0}
+      <p class="small muted">No snooze options were provided.</p>
+    {/if}
   </div>
 </div>
 
@@ -68,6 +62,14 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
+  }
+
+  .choice {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    border-radius: var(--radius-sm);
+    text-align: left;
   }
 
   .picked {

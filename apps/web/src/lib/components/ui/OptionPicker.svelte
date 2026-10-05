@@ -1,64 +1,50 @@
 <script lang="ts">
-  import type { UiComponentProps } from "./registry";
+  import type { OptionPicker, UiActionHandler, UiOption } from "../../types";
 
-  let { component, onaction }: UiComponentProps = $props();
-
-  interface Option {
-    readonly id: string;
-    readonly label: string;
-    readonly hint?: string;
+  interface Props {
+    component: OptionPicker;
+    /** A reply is streaming; the choice could not be sent yet, so the buttons wait. */
+    busy?: boolean;
+    onaction: UiActionHandler;
   }
 
-  const prompt = $derived(
-    typeof component.props.prompt === "string" ? component.props.prompt : undefined,
-  );
+  let { component, busy = false, onaction }: Props = $props();
 
-  const options = $derived.by((): ReadonlyArray<Option> => {
-    const raw = component.props.options;
-    if (!Array.isArray(raw)) return [];
-    return raw.flatMap((item): Option[] => {
-      if (typeof item === "string") return [{ id: item, label: item }];
-      if (item && typeof item === "object") {
-        const record = item as Record<string, unknown>;
-        const id = typeof record.id === "string" ? record.id : undefined;
-        const label = typeof record.label === "string" ? record.label : id;
-        if (id === undefined || label === undefined) return [];
-        const hint = typeof record.hint === "string" ? record.hint : undefined;
-        return [hint === undefined ? { id, label } : { id, label, hint }];
-      }
-      return [];
-    });
-  });
-
+  /** The option whose action is in flight. */
+  let pending = $state<string | null>(null);
+  /** The option Bloom received; set only once the handler confirms it. */
   let chosen = $state<string | null>(null);
 
-  const choose = (option: Option) => {
-    chosen = option.id;
-    onaction({ id: component.id, payload: { choice: option.id } });
+  const locked = $derived(busy || pending !== null || chosen !== null);
+
+  const choose = async (option: UiOption) => {
+    if (locked) return;
+    pending = option.id;
+    try {
+      if (await onaction({ kind: "option_picker", choice: option })) chosen = option.id;
+    } finally {
+      pending = null;
+    }
   };
 </script>
 
 <div class="picker">
-  {#if prompt}
-    <p class="prompt">{prompt}</p>
-  {/if}
-  <div class="options" role="group" aria-label={prompt ?? "Options"}>
-    {#each options as option (option.id)}
+  <p class="prompt">{component.prompt}</p>
+  <div class="options" role="group" aria-label={component.prompt}>
+    {#each component.options as option (option.id)}
       <button
         type="button"
         class="btn option"
         class:chosen={chosen === option.id}
         aria-pressed={chosen === option.id}
-        disabled={chosen !== null && chosen !== option.id}
-        onclick={() => choose(option)}
+        aria-busy={pending === option.id}
+        disabled={locked && chosen !== option.id}
+        onclick={() => void choose(option)}
       >
-        <span>{option.label}</span>
-        {#if option.hint}
-          <span class="small muted">{option.hint}</span>
-        {/if}
+        {option.label}
       </button>
     {/each}
-    {#if options.length === 0}
+    {#if component.options.length === 0}
       <p class="small muted">No options were provided.</p>
     {/if}
   </div>
@@ -76,9 +62,6 @@
   }
 
   .option {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0;
     border-radius: var(--radius-sm);
     text-align: left;
   }

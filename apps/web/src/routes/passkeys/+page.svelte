@@ -102,7 +102,9 @@
           disabled={busy}
           aria-label="Passkey name"
         />
-        <button type="submit" class="btn btn-primary" disabled={busy}>Add this device</button>
+        <button type="submit" class="btn btn-primary" data-testid="passkey-add" disabled={busy}>
+          Add this device
+        </button>
       </form>
     </div>
 
@@ -115,7 +117,7 @@
       {:else}
         <ul class="list">
           {#each passkeys as passkey (passkey.id)}
-            <li class="row">
+            <li class="row" data-testid="passkey-item">
               <div>
                 <div class="pk-name">{passkey.name ?? "Unnamed passkey"}</div>
                 <div class="small muted">
@@ -146,7 +148,13 @@
 
     <footer class="foot">
       <a class="small" href={resolve("/")}>Back to Bloom</a>
-      <button type="button" class="btn btn-quiet" disabled={busy} onclick={signOut}>
+      <button
+        type="button"
+        class="btn btn-quiet"
+        data-testid="sign-out"
+        disabled={busy}
+        onclick={signOut}
+      >
         Sign out
       </button>
     </footer>

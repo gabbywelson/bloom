@@ -1,12 +1,19 @@
 <script lang="ts">
-  import type { UiComponentProps } from "./registry";
+  /**
+   * Rendered only if a `ui_component` kind reaches the client that no branch
+   * in `UiComponentPart` handles. The stream decoder rejects unknown kinds, so
+   * this is a safety net for schema drift, not a normal path.
+   */
+  interface Props {
+    component: unknown;
+  }
 
-  let { component }: UiComponentProps = $props();
+  let { component }: Props = $props();
 </script>
 
 <div class="fallback">
-  <p class="small muted">Unknown component <code>{component.kind}</code></p>
-  <pre>{JSON.stringify(component.props, null, 2)}</pre>
+  <p class="small muted">Bloom sent something this app cannot show yet.</p>
+  <pre>{JSON.stringify(component, null, 2)}</pre>
 </div>
 
 <style>

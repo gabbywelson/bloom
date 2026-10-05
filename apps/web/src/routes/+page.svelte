@@ -1,161 +1,187 @@
 <script lang="ts">
   /**
-   * Main two-pane shell: the conversation on the left, today's tasks on the
-   * right. Data is placeholder for now; the next wave swaps these arrays for
-   * the typed @bloom/api client without touching ThreadView / TaskList.
+   * Main two-pane shell: the conversation on the left, tasks on the right.
+   * Data comes from the typed client (`#lib/api`); the chat stream is folded
+   * into `messages` one event at a time by the pure reducer in `#lib/chat`.
    */
+  import { onMount } from "svelte";
+  import { DateTime } from "effect";
+  import { completeTask, loadMainThread, loadMessages, loadTasks, sendMessage } from "#lib/api.js";
+  import { applyEvent } from "#lib/chat.js";
+  import Flower from "#lib/components/Flower.svelte";
   import TaskList from "#lib/components/tasks/TaskList.svelte";
   import ThreadView from "#lib/components/thread/ThreadView.svelte";
-  import type { UiAction, UiMessage, UiTask } from "#lib/types.js";
+  import {
+    type ChatMessage,
+    type TaskId,
+    type TaskJson,
+    type ThreadJson,
+    toChatMessage,
+    type UiAction,
+    type UiActionHandler,
+  } from "#lib/types.js";
 
-  const now = Date.now();
-  const minutesAgo = (minutes: number) => new Date(now - minutes * 60_000).toISOString();
+  const CALM_FAILURE = "That didn't go through. Give it a moment and try again.";
 
-  let messages = $state<UiMessage[]>([
-    {
-      id: "m1",
-      role: "assistant",
-      createdAt: minutesAgo(32),
-      parts: [
-        {
-          type: "text",
-          text: "Morning. The week looks lighter than last one. Two things are due today and one of them is small.",
-        },
-      ],
-    },
-    {
-      id: "m2",
-      role: "user",
-      createdAt: minutesAgo(30),
-      parts: [{ type: "text", text: "Which one is small?" }],
-    },
-    {
-      id: "m3",
-      role: "assistant",
-      createdAt: minutesAgo(29),
-      parts: [
-        { type: "tool_call", id: "t1", name: "list_tasks", args: { due: "today" } },
-        { type: "tool_result", toolCallId: "t1", name: "list_tasks", result: { count: 2 } },
-        { type: "text", text: "Renewing the library card. It takes a minute online." },
-        {
-          type: "ui_component",
-          component: {
-            id: "c1",
-            kind: "task_card",
-            props: {
-              title: "Renew library card",
-              notes: "The old one lapses Friday.",
-              due: "today",
-              effort: 1,
-              area: "Home",
-            },
-          },
-        },
-      ],
-    },
-    {
-      id: "m4",
-      role: "assistant",
-      createdAt: minutesAgo(28),
-      parts: [
-        { type: "text", text: "Want to do it now, or should I bring it back later?" },
-        {
-          type: "ui_component",
-          component: {
-            id: "c2",
-            kind: "option_picker",
-            props: {
-              options: [
-                { id: "now", label: "Now", hint: "I'll open the page" },
-                { id: "later", label: "Later today" },
-                { id: "skip", label: "Not this week" },
-              ],
-            },
-          },
-        },
-      ],
-    },
-  ]);
+  let thread = $state<ThreadJson | null>(null);
+  // Replaced wholesale on every change, so no deep proxy is needed.
+  let messages = $state.raw<ReadonlyArray<ChatMessage>>([]);
+  let tasks = $state.raw<ReadonlyArray<TaskJson>>([]);
 
+  let loading = $state(true);
+  let loadError = $state<string | null>(null);
   let streaming = $state(false);
+  let chatError = $state<string | null>(null);
+  let tasksLoading = $state(false);
+  let tasksError = $state<string | null>(null);
+  let completing = $state<TaskId | null>(null);
 
-  let tasks = $state<UiTask[]>([
-    {
-      id: "t1",
-      title: "Renew library card",
-      status: "open",
-      due: new Date(now).toISOString(),
-      effort: 1,
-      area: "Home",
-    },
-    {
-      id: "t2",
-      title: "Reply to the landlord about the heating",
-      status: "open",
-      due: new Date(now).toISOString(),
-      effort: 2,
-      area: "Home",
-    },
-    {
-      id: "t3",
-      title: "Book a dentist check-up",
-      status: "snoozed",
-      due: new Date(now + 3 * 86_400_000).toISOString(),
-      effort: 2,
-      area: "Health",
-    },
-    { id: "t4", title: "Water the plants", status: "done", area: "Home" },
-  ]);
+  const refreshTasks = async () => {
+    tasksLoading = true;
+    tasksError = null;
+    try {
+      tasks = await loadTasks();
+    } catch {
+      tasksError = "Couldn't refresh tasks just now.";
+    } finally {
+      tasksLoading = false;
+    }
+  };
 
-  let refreshing = $state(false);
+  const load = async () => {
+    loading = true;
+    loadError = null;
+    try {
+      const [main] = await Promise.all([loadMainThread(), refreshTasks()]);
+      thread = main;
+      messages = (await loadMessages(main.id)).map(toChatMessage);
+    } catch {
+      loadError = "Bloom couldn't open the conversation.";
+    } finally {
+      loading = false;
+    }
+  };
 
-  const send = (text: string) => {
-    messages.push({
-      id: `local-${Date.now()}`,
-      role: "user",
-      createdAt: new Date().toISOString(),
-      parts: [{ type: "text", text }],
-    });
-    // Placeholder reply until the API is wired in.
+  // The layout only mounts this page once the session is ready (see +layout.svelte).
+  onMount(() => {
+    void load();
+  });
+
+  /** Sends one user turn; resolves `true` once the reply stream has ended normally. */
+  const send = async (text: string): Promise<boolean> => {
+    const target = thread;
+    if (target === null || streaming) return false;
+    chatError = null;
+    messages = [
+      ...messages,
+      {
+        id: `local-${crypto.randomUUID()}`,
+        role: "user",
+        parts: [{ type: "text", text }],
+        createdAt: DateTime.nowUnsafe(),
+      },
+    ];
     streaming = true;
-    setTimeout(() => {
-      streaming = false;
-      messages.push({
-        id: `local-${Date.now()}`,
-        role: "assistant",
-        createdAt: new Date().toISOString(),
-        parts: [{ type: "text", text: "Noted. I'm not connected to anything yet, but I heard you." }],
+    try {
+      await sendMessage(target.id, text, (event) => {
+        messages = applyEvent(messages, event, DateTime.nowUnsafe());
+        if (event.type === "tasks_changed") void refreshTasks();
+        if (event.type === "error") chatError = event.message;
       });
-    }, 1200);
+      return true;
+    } catch {
+      chatError = CALM_FAILURE;
+      return false;
+    } finally {
+      streaming = false;
+    }
   };
 
-  const onaction = (action: UiAction) => {
-    messages.push({
-      id: `local-${Date.now()}`,
-      role: "system",
-      createdAt: new Date().toISOString(),
-      parts: [{ type: "text", text: `Action from ${action.id}: ${JSON.stringify(action.payload)}` }],
-    });
+  /** Marks a task done through the API; resolves `true` when the server accepted it. */
+  const complete = async (id: TaskId): Promise<boolean> => {
+    if (completing !== null) return false;
+    completing = id;
+    tasksError = null;
+    try {
+      await completeTask(id);
+      await refreshTasks();
+      return true;
+    } catch {
+      tasksError = "Couldn't mark that done just now.";
+      return false;
+    } finally {
+      completing = null;
+    }
   };
 
-  const refresh = () => {
-    refreshing = true;
-    setTimeout(() => {
-      refreshing = false;
-    }, 600);
+  // Generative-UI actions: task cards act directly through the API; everything
+  // else goes back to Bloom as the user's reply, so the agent stays in the loop
+  // and nothing consequential runs without it. The components disable their
+  // buttons while a reply streams (`send` refuses then) and only show a choice
+  // as made once the promise resolves `true`.
+  const onaction: UiActionHandler = (action: UiAction) => {
+    switch (action.kind) {
+      case "task_card":
+        return complete(action.taskId);
+      case "option_picker":
+        return send(action.choice.label);
+      case "confirm":
+        return send(action.label);
+      case "snooze_picker":
+        return send(`Snooze it until ${action.choice.label.toLowerCase()}.`);
+    }
   };
 </script>
 
-<div class="shell">
-  <div class="thread-pane">
-    <ThreadView {messages} {streaming} onsend={send} {onaction} />
+{#if loading}
+  <div class="centered" aria-busy="true">
+    <Flower state="opening" size={48} label="Bloom is opening" />
+    <p class="muted small">Opening</p>
   </div>
-  <div class="side-pane">
-    <TaskList {tasks} onrefresh={refresh} loading={refreshing} />
+{:else if loadError !== null || thread === null}
+  <div class="centered">
+    <Flower state="closed" size={48} />
+    <p class="error">{loadError ?? "Bloom couldn't open the conversation."}</p>
+    <button type="button" class="btn" onclick={() => void load()}>Try again</button>
   </div>
-</div>
+{:else}
+  <div class="shell">
+    <div class="thread-pane">
+      <ThreadView
+        {messages}
+        {streaming}
+        error={chatError}
+        onsend={(text) => void send(text)}
+        {onaction}
+      />
+    </div>
+    <div class="side-pane">
+      <TaskList
+        {tasks}
+        onrefresh={() => void refreshTasks()}
+        oncomplete={(id) => void complete(id)}
+        loading={tasksLoading}
+        {completing}
+        error={tasksError}
+      />
+    </div>
+  </div>
+{/if}
 
 <style>
+  .centered {
+    margin: auto;
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3);
+    padding: var(--space-7);
+    text-align: center;
+  }
+
+  .error {
+    color: var(--color-danger);
+  }
+
   .shell {
     flex: 1;
     min-height: 0;
