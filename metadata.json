@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M45D4AS0VKCSY0P7HVW8V0A6",
+  "strategy": "manual-commit",
+  "branch": "t3code/ios-client-skeleton-and-chat",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "README.md",
+    "docs/ARCHITECTURE.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 5863,
+    "cache_read_tokens": 4036315,
+    "output_tokens": 3959,
+    "api_call_count": 5
+  }
+}

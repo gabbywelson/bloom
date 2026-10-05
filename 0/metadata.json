@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M45D4AS0VKCSY0P7HVW8V0A6",
+  "session_id": "deb2819b-92b1-4621-ae7f-e92eb0e632ea",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-05T06:48:30.581854Z",
+  "branch": "t3code/ios-client-skeleton-and-chat",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "README.md",
+    "docs/ARCHITECTURE.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "d8d6bc80d77b",
+  "checkpoint_transcript_start": 2931,
+  "transcript_lines_at_start": 2931,
+  "compact_transcript_start": 495,
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 5863,
+    "cache_read_tokens": 4036315,
+    "output_tokens": 3959,
+    "api_call_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-05T06:48:30.176111Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 0,
+    "total_lines_changed": 0,
+    "agent_percentage": 0,
+    "metric_version": 2
+  }
+}
