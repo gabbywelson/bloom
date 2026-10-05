@@ -23,6 +23,8 @@ still needed to see HTTP, SQL and job spans with full fidelity.
 
 ## Consequences
 
+- Jaeger runs as v2. Its query API is `/api/v3/traces?query.service_name=bloom-server&query.start_time_min=...&query.start_time_max=...`; the legacy `/api/traces` path returns 404.
+
 - Trace IDs match across Jaeger and Langfuse, so a "why did Bloom do this?"
   panel can deep-link to either.
 - The compose stack is heavy (five containers for Langfuse alone). It is an
