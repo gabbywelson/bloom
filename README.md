@@ -37,6 +37,7 @@ passkey at `/login`. There is no sign-up flow by design (ADR 0003).
 | ----------------------- | ---------------------------------------------------------------------------- |
 | `apps/server`           | The one Bun + Effect process: HTTP API, auth, agent runtime, jobs, telemetry |
 | `apps/web`              | SvelteKit 3 / Svelte 5 PWA                                                   |
+| `apps/ios`              | SwiftUI iPhone app (XcodeGen project; see `apps/ios/README.md`)              |
 | `packages/domain`       | Effect Schema entities, ids, events, UI component parts, service interfaces  |
 | `packages/api`          | The HttpApi contract; typed client; `openapi.json`                           |
 | `packages/db`           | Migrations, repositories, DB-backed domain services, seed                    |
@@ -52,6 +53,7 @@ passkey at `/login`. There is no sign-up flow by design (ADR 0003).
 bun run check               # typecheck + lint + format check + all tests
 bun run test                # all package tests (db tests need Postgres)
 bun run openapi             # regenerate packages/api/openapi.json
+bun run ios:test            # build the iOS app and run its tests on the simulator
 bun run infra:up:langfuse   # add the Langfuse stack (heavy; ADR 0010)
 ```
 
