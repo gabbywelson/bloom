@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M45B79W5272ECDG1AESQZ3R3",
+  "strategy": "manual-commit",
+  "branch": "t3code/ios-client-skeleton-and-chat",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/ios/Bloom/Features/Captures/CapturesModel.swift",
+    "apps/ios/Bloom/Features/Captures/CapturesView.swift",
+    "apps/ios/BloomKit/Capture/CaptureDraft.swift",
+    "apps/ios/BloomShare/ShareView.swift",
+    "apps/ios/BloomShare/ShareViewController.swift",
+    "apps/ios/BloomShare/SharedItem.swift",
+    "apps/ios/BloomTests/CaptureTests.swift",
+    "docs/adrs/0020-ios-extensions-share-the-session.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 50,
+    "cache_creation_tokens": 46137,
+    "cache_read_tokens": 15419490,
+    "output_tokens": 33882,
+    "api_call_count": 25
+  }
+}
