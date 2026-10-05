@@ -40,6 +40,11 @@ web build.
   runtime captured at Layer build, inside a `job.<name>` span. A job defect is
   logged and swallowed so pg-boss does not retry it blindly.
   `BLOOM_JOBS_RUN_ON_START=true` sends each job once at boot (dev aid).
+- **Idle timeout.** Bun's HTTP server closes connections that are silent for
+  10 seconds by default. A chat reply is silent while the model thinks, so the
+  server sets `idleTimeout` to 255 seconds (Bun's maximum). Found the hard way:
+  the first real end-to-end run was cut off at 11.8 seconds with the model span
+  marked interrupted and an empty assistant message left behind.
 - **Tracing exclusion.** The HTTP tracer is disabled for
   `GET /api/auth/magic-link/verify`, whose query string carries the token;
   otherwise `url.full` would export the credential to Jaeger and Langfuse.

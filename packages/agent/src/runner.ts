@@ -37,6 +37,9 @@ export const MAX_TOOL_ROUNDS = 4;
 export const USER_FACING_MODEL_ERROR =
   "I couldn't reach my thinking right now. Nothing was lost; try again in a moment.";
 
+/** What the user sees when the model finished without saying or doing anything. */
+export const USER_FACING_EMPTY_REPLY = "I came up empty on that one. Could you say it another way?";
+
 /** Streams one agent turn as `ChatStreamEvent`s and persists the assistant message. */
 export interface AgentRunnerShape {
   readonly run: (input: RunInput) => Stream.Stream<ChatStreamEvent, RunError>;
@@ -149,6 +152,7 @@ export class AgentRunner extends Context.Service<AgentRunner, AgentRunnerShape>(
         const parts: Array<MessagePart> = [];
         const textIndex = new Map<string, number>();
         let prompt = assembled.prompt;
+        let lastFinish: Response.FinishPart["reason"] | undefined;
 
         const onPart = Effect.fnUntraced(function* (
           part: ModelStreamPart<BloomTools>,
@@ -199,6 +203,10 @@ export class AgentRunner extends Context.Service<AgentRunner, AgentRunnerShape>(
               }
               return;
             }
+            case "finish": {
+              lastFinish = part.reason;
+              return;
+            }
             default:
               return;
           }
@@ -226,7 +234,21 @@ export class AgentRunner extends Context.Service<AgentRunner, AgentRunnerShape>(
           );
         });
 
-        const outcome = yield* Effect.result(rounds);
+        // The HTTP layer interrupts the run when the client goes away (and Bun
+        // used to do it after 10 idle seconds); keep what the model produced.
+        const persistOnInterrupt = messages
+          .replaceParts(assistant.id, parts)
+          .pipe(
+            Effect.ignore,
+            Effect.andThen(
+              Effect.logWarning("agent run interrupted; partial output persisted").pipe(
+                Effect.annotateLogs({ "bloom.thread_id": thread.id, "bloom.parts": parts.length }),
+              ),
+            ),
+          );
+        const outcome = yield* Effect.result(
+          rounds.pipe(Effect.onInterrupt(() => persistOnInterrupt)),
+        );
 
         // A failed round can leave a tool call without its result; close it so
         // the stored history stays replayable, and tell the client the call ended.
@@ -259,6 +281,20 @@ export class AgentRunner extends Context.Service<AgentRunner, AgentRunnerShape>(
           );
           yield* emit({ type: "error", message: USER_FACING_MODEL_ERROR });
           return yield* error;
+        }
+
+        if (parts.length === 0) {
+          // A refusal, a length cut-off before any text, or a provider quirk:
+          // ending with an empty message would look like Bloom went quiet.
+          yield* Effect.logWarning("agent run produced no output").pipe(
+            Effect.annotateLogs({
+              "bloom.thread_id": thread.id,
+              "bloom.run_type": runType,
+              "bloom.finish_reason": lastFinish ?? "none",
+            }),
+          );
+          yield* emit({ type: "error", message: USER_FACING_EMPTY_REPLY });
+          return;
         }
 
         yield* emit({ type: "message_end", message: toJsonMessage(persisted) });

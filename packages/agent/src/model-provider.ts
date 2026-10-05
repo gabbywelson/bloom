@@ -76,6 +76,8 @@ export interface FakeTurn {
   readonly object?: unknown;
   /** Fail this turn with a `ModelError` of the given reason instead of answering. */
   readonly fail?: ModelErrorReason | undefined;
+  /** Override the finish reason (default: "tool-calls" with tool calls, else "stop"). */
+  readonly finish?: Response.FinishPartEncoded["reason"] | undefined;
 }
 
 const aiErrorFor = (reason: ModelErrorReason, method: string): AiError.AiError => {
@@ -117,7 +119,7 @@ const streamPartsFor = (turn: FakeTurn, index: number): Array<Response.StreamPar
   });
   parts.push({
     type: "finish",
-    reason: toolCalls.length > 0 ? "tool-calls" : "stop",
+    reason: turn.finish ?? (toolCalls.length > 0 ? "tool-calls" : "stop"),
     usage: fakeUsage,
   });
   return parts;
@@ -142,7 +144,7 @@ const generatePartsFor = (turn: FakeTurn, index: number): Array<Response.PartEnc
   });
   parts.push({
     type: "finish",
-    reason: toolCalls.length > 0 ? "tool-calls" : "stop",
+    reason: turn.finish ?? (toolCalls.length > 0 ? "tool-calls" : "stop"),
     usage: fakeUsage,
   });
   return parts;

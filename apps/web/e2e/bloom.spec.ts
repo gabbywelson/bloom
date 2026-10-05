@@ -22,6 +22,8 @@ const JAEGER_SERVICE = process.env.JAEGER_SERVICE ?? "bloom-server";
 const REPLY_TIMEOUT = 90_000;
 /** How long the exporter + collector may take to land the spans in Jaeger. */
 const TRACE_TIMEOUT = 60_000;
+/** Nouns for the per-run unique task; the suffix makes the title unmistakable. */
+const PLANTS = ["ferns", "orchids", "basil", "succulents", "tomatoes"];
 
 /** Runs `bun run auth:link` in the repo root and returns the printed sign-in URL. */
 const requestMagicLink = (): string => {
@@ -210,19 +212,22 @@ test.describe("Bloom", () => {
     // Only traces that start from here on count as this run's.
     const chatStartedAt = new Date();
 
+    // A fresh noun per run so a task left by an earlier run cannot satisfy the check.
+    const plant = `${PLANTS[Math.floor(Math.random() * PLANTS.length)]}-${Date.now().toString(36)}`;
+
     await test.step("ask Bloom to add a task", async () => {
-      await ask(page, "Please add a task to water the plants tomorrow");
+      await ask(page, `Please add a task to water the ${plant} tomorrow`);
       await expect(
         page
           .getByTestId("task-list")
           .getByTestId("task-item")
-          .filter({ hasText: /water the plants/i }),
+          .filter({ hasText: new RegExp(`water the ${plant}`, "i") }),
       ).not.toHaveCount(0);
     });
 
     await test.step("ask what's on the list", async () => {
       const reply = await ask(page, "What's on my list?");
-      await expect(reply).toContainText(/plants/i);
+      await expect(reply).toContainText(new RegExp(plant, "i"));
     });
 
     await test.step("each turn is one trace in Jaeger", async () => {

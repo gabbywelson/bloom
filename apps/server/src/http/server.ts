@@ -56,10 +56,22 @@ export const ListenLog = Layer.effectDiscard(
  */
 export const HttpRoutesLive = ListenLog.pipe(Layer.provideMerge(serveRoutes(AllRoutes)));
 
+/**
+ * Bun closes a connection that sends nothing for `idleTimeout` seconds (default
+ * 10). A chat reply streams nothing while the model thinks, which is routinely
+ * longer than that, so the SSE response would be cut off and the run
+ * interrupted. 255 is Bun's maximum.
+ */
+export const IDLE_TIMEOUT_SECONDS = 255;
+
 /** Bun server bound to `PORT` on all interfaces (Tailscale reaches it by hostname). */
 export const BunServerLive = Layer.unwrap(
   Effect.map(ServerConfig, (config) =>
-    BunHttpServer.layer({ port: config.port, hostname: "0.0.0.0" }),
+    BunHttpServer.layer({
+      port: config.port,
+      hostname: "0.0.0.0",
+      idleTimeout: IDLE_TIMEOUT_SECONDS,
+    }),
   ),
 );
 

@@ -17,6 +17,7 @@ import {
   MAX_TOOL_ROUNDS,
   ORPHAN_TOOL_RESULT,
   toPromptMessages,
+  USER_FACING_EMPTY_REPLY,
   USER_FACING_MODEL_ERROR,
 } from "../src/index.ts";
 
@@ -293,6 +294,51 @@ describe("AgentRunner", () => {
     expect(types.filter((type) => type === "tool_call")).toHaveLength(MAX_TOOL_ROUNDS);
     expect(types.filter((type) => type === "tool_result")).toHaveLength(MAX_TOOL_ROUNDS);
     expect(types.at(-1)).toBe("message_end");
+  });
+
+  it("reports a turn that produced nothing instead of ending with an empty message", async () => {
+    const layer = layerFor([{ finish: "content-filter" }]);
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const threads = yield* ThreadService;
+        const messages = yield* MessageService;
+        const runner = yield* AgentRunner;
+        const thread = yield* threads.ensureMain;
+        const { events, outcome } = yield* collect(runner.run({ threadId: thread.id, text: "hi" }));
+        const history = yield* messages.list(thread.id);
+        return { events, outcome, history };
+      }).pipe(Effect.provide(layer)),
+    );
+    expect(result.outcome._tag).toBe("Success");
+    expect(result.events.map((event) => event.type)).toEqual(["message_start", "error"]);
+    const error = result.events[1];
+    expect(error?.type === "error" && error.message).toBe(USER_FACING_EMPTY_REPLY);
+    const assistant = result.history.find((message) => message.role === "assistant");
+    expect(assistant?.parts).toEqual([]);
+  });
+
+  it("persists the partial reply when the consumer disconnects mid-stream", async () => {
+    const layer = layerFor([{ text: "one two three four five six seven eight" }]);
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const threads = yield* ThreadService;
+        const messages = yield* MessageService;
+        const runner = yield* AgentRunner;
+        const thread = yield* threads.ensureMain;
+        // Taking two events (message_start + first text_delta) and walking away
+        // interrupts the producer, like a client closing the SSE connection.
+        const taken = yield* runner
+          .run({ threadId: thread.id, text: "hi" })
+          .pipe(Stream.take(2), Stream.runCollect);
+        const history = yield* messages.list(thread.id);
+        return { taken: Array.from(taken), history };
+      }).pipe(Effect.provide(layer)),
+    );
+    expect(result.taken.map((event) => event.type)).toEqual(["message_start", "text_delta"]);
+    const assistant = result.history.find((message) => message.role === "assistant");
+    expect(assistant).toBeDefined();
+    const text = assistant?.parts.find((part) => part.type === "text");
+    expect(text?.type === "text" && text.text.length).toBeGreaterThan(0);
   });
 
   it("fails with ThreadNotFound before emitting anything for an unknown thread", async () => {
