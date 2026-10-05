@@ -18,6 +18,7 @@ export * from "./stream.ts";
 export * from "./task.ts";
 export * from "./thread.ts";
 export * from "./ui-component.ts";
+export * from "./services/capture-service.ts";
 export * from "./services/event-sink.ts";
 export * from "./services/message-service.ts";
 export * from "./services/task-service.ts";

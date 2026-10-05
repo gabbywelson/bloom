@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { DateTime, Effect, Layer, Schema } from "effect";
 import {
+  Capture,
+  CaptureId,
+  CaptureNotFound,
+  CaptureService,
   EventSink,
   MessageId,
   MessageService,
@@ -351,6 +355,63 @@ describe("EventSink.layerMemory", () => {
         });
         expect(noKey._tag).toBe("Inserted");
         expect(noKeyAgain._tag).toBe("Inserted");
+      }),
+    ));
+});
+
+describe("CaptureService.layerMemory", () => {
+  const runCaptures = <A, E>(effect: Effect.Effect<A, E, CaptureService>) =>
+    Effect.runPromise(effect.pipe(Effect.provide(CaptureService.layerMemory)));
+
+  it("creates with defaults, lists in creation order, filters by status and triages", () =>
+    runCaptures(
+      Effect.gen(function* () {
+        const captures = yield* CaptureService;
+        const decode = Schema.decodeSync(Capture.jsonCreate);
+        const link = yield* captures.create(
+          decode({ kind: "share", payload: { url: "https://example.com/article" } }),
+          "user",
+        );
+        expect(link.status).toBe("new");
+        expect(link.transcript).toBeNull();
+        expect(link.routedTo).toBeNull();
+        const note = yield* captures.create(
+          decode({ kind: "text", payload: { text: "Buy stamps" } }),
+          "user",
+        );
+
+        expect((yield* captures.list()).map((capture) => capture.id)).toEqual([link.id, note.id]);
+
+        const routed = yield* captures.update(
+          note.id,
+          { status: "routed", routedTo: "task:t1" },
+          "agent",
+        );
+        expect(routed.status).toBe("routed");
+        expect(routed.routedTo).toBe("task:t1");
+        expect(routed.payload).toEqual({ text: "Buy stamps" });
+        expect(routed.kind).toBe("text");
+
+        expect((yield* captures.list({ status: ["new"] })).map((capture) => capture.id)).toEqual([
+          link.id,
+        ]);
+        expect((yield* captures.get(link.id)).payload).toEqual({
+          url: "https://example.com/article",
+        });
+      }),
+    ));
+
+  it("fails with CaptureNotFound for unknown ids", () =>
+    runCaptures(
+      Effect.gen(function* () {
+        const captures = yield* CaptureService;
+        const missing = Schema.decodeSync(CaptureId)("019a0000-0000-7000-8000-00000000dead");
+        const error = yield* Effect.flip(captures.get(missing));
+        expect(error._tag).toBe("CaptureNotFound");
+        const patchError = yield* Effect.flip(
+          captures.update(missing, { status: "dismissed" }, "user"),
+        );
+        expect(patchError).toBeInstanceOf(CaptureNotFound);
       }),
     ));
 });

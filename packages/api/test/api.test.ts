@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { TaskId, ThreadId } from "@bloom/domain";
+import { CaptureId, TaskId, ThreadId } from "@bloom/domain";
 import { Cause, DateTime, Effect, Exit, Layer, Schema, Stream } from "effect";
 import { HttpClient, HttpClientResponse, HttpServer, HttpServerRespondable } from "effect/http";
 import { HttpApiError, HttpApiTest } from "effect/http-api";
@@ -11,7 +11,14 @@ import { AuthorizationAllow, AuthorizationReject, fixedUser, TestHandlers } from
 const taskId = Schema.decodeSync(TaskId);
 const threadId = Schema.decodeSync(ThreadId);
 
-const makeClient = HttpApiTest.groups(BloomApi, ["health", "me", "threads", "messages", "tasks"]);
+const makeClient = HttpApiTest.groups(BloomApi, [
+  "health",
+  "me",
+  "threads",
+  "messages",
+  "tasks",
+  "captures",
+]);
 
 type Client = Effect.Success<typeof makeClient>;
 
@@ -393,5 +400,60 @@ describe("client", () => {
         expect(health.status).toBe("ok");
         expect(urls).toEqual(["http://bloom.test/api/health"]);
       }),
+    ));
+});
+
+describe("captures", () => {
+  it("files captures with only kind and payload, lists by status and triages", () =>
+    run((client) =>
+      Effect.gen(function* () {
+        const link = yield* client.captures.create({
+          payload: { kind: "share", payload: { url: "https://example.com/a", title: "A" } },
+        });
+        expect(link.status).toBe("new");
+        expect(link.transcript).toBeNull();
+        expect(link.payload).toEqual({ url: "https://example.com/a", title: "A" });
+        const note = yield* client.captures.create({
+          payload: { kind: "text", payload: { text: "Buy stamps" } },
+        });
+
+        expect((yield* client.captures.list({ query: {} })).map((c) => c.id)).toEqual([
+          link.id,
+          note.id,
+        ]);
+        const dismissed = yield* client.captures.update({
+          params: { id: note.id },
+          payload: { status: "dismissed" },
+        });
+        expect(dismissed.status).toBe("dismissed");
+        expect(dismissed.payload).toEqual({ text: "Buy stamps" });
+
+        const fresh = yield* client.captures.list({ query: { status: ["new"] } });
+        expect(fresh.map((c) => c.id)).toEqual([link.id]);
+        expect((yield* client.captures.get({ params: { id: link.id } })).kind).toBe("share");
+      }),
+    ));
+
+  it("answers CaptureNotFound (404) for unknown ids", () =>
+    run((client) =>
+      Effect.gen(function* () {
+        const id = Schema.decodeSync(CaptureId)("019a0000-0000-7000-8000-00000000dead");
+        const error = yield* Effect.flip(client.captures.get({ params: { id } }));
+        expect(error._tag).toBe("CaptureNotFound");
+        const patchError = yield* Effect.flip(
+          client.captures.update({ params: { id }, payload: { status: "routed" } }),
+        );
+        expect(patchError._tag).toBe("CaptureNotFound");
+      }),
+    ));
+
+  it("requires authorization", () =>
+    run(
+      (client) =>
+        Effect.gen(function* () {
+          const error = yield* Effect.flip(client.captures.list({ query: {} }));
+          expect(error._tag).toBe("Unauthorized");
+        }),
+      AuthorizationReject,
     ));
 });

@@ -92,9 +92,10 @@ Not yet modelled: Routine, Chore, Area, Item, Memory, CheckIn (listed in
 VISION and the brief; deferred past Phase 0).
 
 Domain **service tags** (`TaskService`, `ThreadService`, `MessageService`,
-`EventSink`) are declared in `domain` with in-memory Layers for tests and
-implemented in `db`. Every task mutation writes an audit `Event`
-(`source: "domain"`) in the same transaction. `ChatStreamEvent` is the SSE
+`CaptureService`, `EventSink`) are declared in `domain` with in-memory Layers
+for tests and implemented in `db`. Every task and capture mutation writes an
+audit `Event` (`source: "domain"`) in the same transaction; capture events
+never include the payload (ADR 0019). `ChatStreamEvent` is the SSE
 contract between server and clients.
 
 ## How a message flows (read this in ten minutes)

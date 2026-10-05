@@ -1,3 +1,4 @@
+export * from "./capture-service.ts";
 export * from "./event-sink.ts";
 export * from "./message-service.ts";
 export * from "./task-service.ts";

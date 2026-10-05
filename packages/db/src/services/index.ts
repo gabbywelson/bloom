@@ -1,13 +1,15 @@
 import { Layer } from "effect";
+import { CaptureServiceDb } from "./capture-service.ts";
 import { EventSinkDb } from "./event-sink.ts";
 import { MessageServiceDb } from "./message-service.ts";
 import { TaskServiceDb } from "./task-service.ts";
 import { ThreadServiceDb } from "./thread-service.ts";
 
-export { EventSinkDb, MessageServiceDb, TaskServiceDb, ThreadServiceDb };
+export { CaptureServiceDb, EventSinkDb, MessageServiceDb, TaskServiceDb, ThreadServiceDb };
 
-/** All four domain services backed by Postgres. Requires a `SqlClient`. */
+/** Every domain service backed by Postgres. Requires a `SqlClient`. */
 export const DbServicesLive = Layer.mergeAll(
+  CaptureServiceDb,
   TaskServiceDb,
   ThreadServiceDb,
   MessageServiceDb,

@@ -1,4 +1,10 @@
-import { EventSink, MessageService, TaskService, ThreadService } from "@bloom/domain";
+import {
+  CaptureService,
+  EventSink,
+  MessageService,
+  TaskService,
+  ThreadService,
+} from "@bloom/domain";
 import { PgClient } from "@effect/sql-pg";
 import { Effect, Layer, ManagedRuntime, Redacted } from "effect";
 import { SqlClient } from "effect/sql";
@@ -25,9 +31,9 @@ export const ensureTestDatabase = Effect.gen(function* () {
   }
 }).pipe(Effect.provide(PgClient.layer({ url: Redacted.make(adminUrl.toString()) })));
 
-export type DbServices = TaskService | ThreadService | MessageService | EventSink;
+export type DbServices = CaptureService | TaskService | ThreadService | MessageService | EventSink;
 
-/** Migrated test database plus the four domain services and the SqlClient. */
+/** Migrated test database plus every domain service and the SqlClient. */
 export const TestDbLive = DbServicesLive.pipe(
   Layer.provideMerge(MigratorLive),
   Layer.provideMerge(makePgLayer(Redacted.make(TEST_DATABASE_URL))),

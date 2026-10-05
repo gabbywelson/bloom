@@ -57,6 +57,16 @@ describe("bloom-server", () => {
     expect(await response.json()).toEqual({ _tag: "Unauthorized", message: "Please sign in." });
   });
 
+  it("the captures routes are mounted behind Authorization", async () => {
+    expect((await get("/api/captures")).status).toBe(401);
+    const response = await get("/api/captures", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer not-a-token" },
+      body: JSON.stringify({ kind: "text", payload: { text: "hi" } }),
+    });
+    expect(response.status).toBe(401);
+  });
+
   it("GET /api/auth/ok reaches Better Auth", async () => {
     const response = await get("/api/auth/ok");
     expect(response.status).toBe(200);

@@ -52,6 +52,10 @@ describe("OpenAPI", () => {
     expect(spec.paths["/api/threads/{id}"]?.get).toBeDefined();
     expect(spec.paths["/api/threads/{id}/messages"]?.get).toBeDefined();
     expect(spec.paths["/api/threads/{id}/messages"]?.post).toBeDefined();
+    expect(spec.paths["/api/captures"]?.get).toBeDefined();
+    expect(spec.paths["/api/captures"]?.post).toBeDefined();
+    expect(spec.paths["/api/captures/{id}"]?.get).toBeDefined();
+    expect(spec.paths["/api/captures/{id}"]?.patch).toBeDefined();
   });
 
   it("keeps create payloads minimal: only title / kind are required, and kind excludes main", () => {

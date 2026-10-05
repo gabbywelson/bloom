@@ -3,6 +3,8 @@
  * domain `layerMemory` layers; the real handlers live in `apps/server`.
  */
 import {
+  Capture,
+  CaptureService,
   type ChatStreamEvent,
   MessageService,
   Task,
@@ -18,6 +20,7 @@ import { Authorization, type AuthUser, CurrentUser, Unauthorized } from "../src/
 import { decodePayload } from "../src/payload.ts";
 
 const decodeTaskCreate = decodePayload(Task.jsonCreate);
+const decodeCaptureCreate = decodePayload(Capture.jsonCreate);
 const decodeThreadCreate = decodePayload(Thread.jsonCreate);
 
 /** The single owner every allowed request runs as. */
@@ -128,6 +131,22 @@ export const TasksHandlers = HttpApiBuilder.group(
   }),
 );
 
+export const CapturesHandlers = HttpApiBuilder.group(
+  BloomApi,
+  "captures",
+  Effect.fn(function* (handlers) {
+    const captures = yield* CaptureService;
+    return handlers.handleAll({
+      create: ({ payload }) =>
+        Effect.flatMap(decodeCaptureCreate(payload), (input) => captures.create(input, "user")),
+      list: ({ query }) =>
+        captures.list(query.status === undefined ? undefined : { status: query.status }),
+      get: ({ params }) => captures.get(params.id),
+      update: ({ params, payload }) => captures.update(params.id, payload, "user"),
+    });
+  }),
+);
+
 /** Every group's test handlers over fresh in-memory domain services. */
 export const TestHandlers = Layer.mergeAll(
   HealthHandlers,
@@ -135,8 +154,14 @@ export const TestHandlers = Layer.mergeAll(
   ThreadsHandlers,
   MessagesHandlers,
   TasksHandlers,
+  CapturesHandlers,
 ).pipe(
   Layer.provide(
-    Layer.mergeAll(TaskService.layerMemory, ThreadService.layerMemory, MessageService.layerMemory),
+    Layer.mergeAll(
+      TaskService.layerMemory,
+      ThreadService.layerMemory,
+      MessageService.layerMemory,
+      CaptureService.layerMemory,
+    ),
   ),
 );

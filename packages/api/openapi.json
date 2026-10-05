@@ -754,6 +754,214 @@
         "description": "Sets `status` to `done` and stamps `completedAt`.",
         "summary": "Complete a task"
       }
+    },
+    "/api/captures": {
+      "post": {
+        "tags": [
+          "Captures"
+        ],
+        "operationId": "captures.create",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Capture",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capture"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Stores raw input for triage. `payload` is free-form JSON; by convention text is `{ text }`, a shared link `{ url, title?, text? }`, an image `{ dataUrl, width, height, caption? }` (ADR 0019).",
+        "summary": "File a capture",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaptureCreate"
+              }
+            }
+          },
+          "required": true
+        }
+      },
+      "get": {
+        "tags": [
+          "Captures"
+        ],
+        "operationId": "captures.list",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "$ref": "#/components/schemas/CaptureStatus"
+              }
+            },
+            "required": false
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Capture"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Captures in creation order, optionally filtered by status (`?status=new`).",
+        "summary": "List captures"
+      }
+    },
+    "/api/captures/{id}": {
+      "get": {
+        "tags": [
+          "Captures"
+        ],
+        "operationId": "captures.get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Capture",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capture"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CaptureNotFound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptureNotFoundEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "One capture by id.",
+        "summary": "Get a capture"
+      },
+      "patch": {
+        "tags": [
+          "Captures"
+        ],
+        "operationId": "captures.update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Capture",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capture"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CaptureNotFound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptureNotFoundEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Partial update of `status`, `routedTo` and `transcript`; `kind` and `payload` never change.",
+        "summary": "Triage a capture",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaptureUpdate"
+              }
+            }
+          },
+          "required": true
+        }
+      }
     }
   },
   "components": {
@@ -776,6 +984,139 @@
           "message"
         ],
         "additionalProperties": false
+      },
+      "CaptureNotFoundEncoded": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "CaptureNotFound"
+            ]
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_tag",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "Capture": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CaptureKind"
+          },
+          "payload": {},
+          "transcript": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaptureStatus"
+          },
+          "routedTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "payload",
+          "transcript",
+          "status",
+          "routedTo",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "title": "Capture.json"
+      },
+      "CaptureStatus": {
+        "type": "string",
+        "enum": [
+          "new",
+          "routed",
+          "dismissed"
+        ]
+      },
+      "CaptureKind": {
+        "type": "string",
+        "enum": [
+          "text",
+          "voice",
+          "share",
+          "image"
+        ]
+      },
+      "CaptureUpdate": {
+        "type": "object",
+        "properties": {
+          "transcript": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaptureStatus"
+          },
+          "routedTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "title": "Capture.jsonUpdate"
+      },
+      "CaptureCreate": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/CaptureKind"
+          },
+          "payload": {},
+          "transcript": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaptureStatus"
+          },
+          "routedTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "payload"
+        ],
+        "additionalProperties": false,
+        "title": "Capture.jsonCreate"
       },
       "TaskNotFoundEncoded": {
         "type": "object",
@@ -1889,6 +2230,10 @@
     {
       "name": "Tasks",
       "description": "Things to do once: the central domain object."
+    },
+    {
+      "name": "Captures",
+      "description": "Raw input (text, voice, share, image) waiting for triage."
     }
   ]
 }

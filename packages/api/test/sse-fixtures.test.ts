@@ -13,6 +13,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  CaptureService,
   type ChatStreamEvent,
   MessageId,
   MessageService,
@@ -27,6 +28,7 @@ import { HttpApiBuilder } from "effect/http-api";
 import { BloomApi } from "../src/api.ts";
 import {
   AuthorizationAllow,
+  CapturesHandlers,
   HealthHandlers,
   MeHandlers,
   TasksHandlers,
@@ -135,11 +137,17 @@ const AppLayer = HttpApiBuilder.layer(BloomApi).pipe(
       MeHandlers,
       ThreadsHandlers,
       TasksHandlers,
+      CapturesHandlers,
       ScriptedMessages,
     ).pipe(Layer.provideMerge(AuthorizationAllow)),
   ),
   Layer.provide(
-    Layer.mergeAll(TaskService.layerMemory, ThreadService.layerMemory, MessageService.layerMemory),
+    Layer.mergeAll(
+      TaskService.layerMemory,
+      ThreadService.layerMemory,
+      MessageService.layerMemory,
+      CaptureService.layerMemory,
+    ),
   ),
   Layer.provide(HttpServer.layerServices),
 );

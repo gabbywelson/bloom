@@ -10,6 +10,7 @@ import { DbServicesLive } from "./services/index.ts";
 export { PgLive, makePgLayer } from "./client.ts";
 export { MigratorLive } from "./migrator.ts";
 export {
+  CaptureServiceDb,
   DbServicesLive,
   EventSinkDb,
   MessageServiceDb,
@@ -19,7 +20,7 @@ export {
 
 /**
  * Everything the server needs: a migrated database (from `DATABASE_URL`) plus
- * the four domain services, with `PgClient`/`SqlClient` also exposed.
+ * every domain service, with `PgClient`/`SqlClient` also exposed.
  */
 export const DbLive = DbServicesLive.pipe(
   Layer.provideMerge(MigratorLive),
