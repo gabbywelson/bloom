@@ -13,8 +13,8 @@
     "dev:web": "bun run --filter @bloom/web dev",
     "dev:op": "op run --env-file=.env -- bun run dev",
     "infra:up": "docker compose up -d",
-    "infra:down": "docker compose down",
-    "infra:reset": "docker compose down -v",
+    "infra:down": "docker compose --profile langfuse down",
+    "infra:reset": "docker compose --profile langfuse down -v",
     "db:migrate": "bun run packages/db/scripts/migrate.ts",
     "db:seed": "bun run packages/db/scripts/seed.ts",
     "auth:link": "bun run apps/server/src/cli/auth-link.ts",
@@ -25,7 +25,8 @@
     "fmt:check": "oxfmt --check",
     "test": "bun run --filter './packages/*' --filter './apps/*' test",
     "check": "bun run typecheck && bun run lint && bun run fmt:check && bun run test",
-    "start:server": "bun run apps/server/src/main.ts"
+    "start:server": "bun run apps/server/src/main.ts",
+    "infra:up:langfuse": "docker compose --profile langfuse up -d"
   },
   "devDependencies": {
     "@effect/tsgo": "^0.48.0",

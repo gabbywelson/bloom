@@ -1,8 +1,12 @@
 # Local infrastructure for Bloom.
 #
-#   bun run infra:up      # start everything
-#   bun run infra:down    # stop (keeps volumes)
-#   bun run infra:reset   # stop and wipe volumes
+#   bun run infra:up           # core: Postgres, OTel collector, Jaeger
+#   bun run infra:up:langfuse  # core + the Langfuse stack (profile "langfuse")
+#   bun run infra:down         # stop everything (keeps volumes)
+#   bun run infra:reset        # stop and wipe volumes
+#
+# Langfuse (web, worker, ClickHouse, Redis, MinIO) is opt-in because it is heavy
+# and, on a loaded laptop, has stalled the OrbStack VM. See ADR 0010.
 #
 # Ports on the host:
 #   5432   Postgres (databases: bloom, langfuse)
@@ -61,6 +65,7 @@ services:
   # --- Langfuse (self-hosted v4) ---------------------------------------------
   langfuse-worker:
     image: docker.langfuse.com/langfuse/langfuse-worker:4
+    profiles: ["langfuse"]
     restart: unless-stopped
     depends_on: &langfuse-depends-on
       postgres:
@@ -104,6 +109,7 @@ services:
 
   langfuse-web:
     image: docker.langfuse.com/langfuse/langfuse:4
+    profiles: ["langfuse"]
     restart: unless-stopped
     depends_on: *langfuse-depends-on
     ports:
@@ -127,6 +133,7 @@ services:
 
   clickhouse:
     image: docker.io/clickhouse/clickhouse-server:25.12
+    profiles: ["langfuse"]
     restart: unless-stopped
     user: "101:101"
     environment:
@@ -145,6 +152,7 @@ services:
 
   minio:
     image: cgr.dev/chainguard/minio
+    profiles: ["langfuse"]
     restart: unless-stopped
     entrypoint: sh
     command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
@@ -165,6 +173,7 @@ services:
 
   redis:
     image: docker.io/redis:7
+    profiles: ["langfuse"]
     restart: unless-stopped
     command: >
       --requirepass bloom-dev-redis
