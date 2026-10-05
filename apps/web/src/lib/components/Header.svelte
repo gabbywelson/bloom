@@ -17,7 +17,8 @@
     <span class="name">Bloom</span>
   </a>
   {#if signedIn}
-    <nav class="nav" aria-label="Account">
+    <nav class="nav" aria-label="Sections">
+      <a class="nav-link" href={resolve("/captures")}>Captures</a>
       <a class="nav-link" href={resolve("/passkeys")}>Passkeys</a>
     </nav>
   {/if}

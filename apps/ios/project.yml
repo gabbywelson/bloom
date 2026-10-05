@@ -1,0 +1,262 @@
+# XcodeGen spec for the Bloom iOS app. The generated Bloom.xcodeproj is not
+# committed: run `bun run ios:generate` (or `xcodegen generate` in this
+# directory) after pulling. Never edit the .xcodeproj by hand.
+name: Bloom
+
+options:
+  # Placeholder reverse-DNS prefix; change it here (and only here) before
+  # setting up real signing.
+  bundleIdPrefix: dev.bloom
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+  xcodeVersion: "27.0"
+
+# Exact versions: the generated project (and its Package.resolved) is not
+# committed, so the pins live here.
+packages:
+  OpenAPIGenerator:
+    url: https://github.com/apple/swift-openapi-generator
+    exactVersion: 1.13.1
+  OpenAPIRuntime:
+    url: https://github.com/apple/swift-openapi-runtime
+    exactVersion: 1.12.2
+  OpenAPIURLSession:
+    url: https://github.com/apple/swift-openapi-urlsession
+    exactVersion: 1.3.2
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    # No Apple developer team yet: simulator builds are ad-hoc signed.
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+
+targets:
+  Bloom:
+    type: application
+    platform: iOS
+    sources:
+      - path: Bloom
+    dependencies:
+      - target: BloomKit
+      - target: BloomShare
+      - target: BloomWidgets
+    entitlements:
+      path: Bloom/Bloom.entitlements
+      properties:
+        # The session token and server are shared with the extensions (ADR 0020).
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)dev.bloom.shared
+        com.apple.security.application-groups:
+          - group.dev.bloom
+        # Read-only daily summaries, opt-in from Settings (ADR 0021).
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+        # Push registration groundwork, behind the Labs flag (ADR 0023).
+        aps-environment: development
+    info:
+      path: Bloom/Info.plist
+      properties:
+        CFBundleDisplayName: Bloom
+        BloomKeychainGroup: $(AppIdentifierPrefix)dev.bloom.shared
+        BloomAppGroup: group.dev.bloom
+        NSHealthShareUsageDescription: Bloom reads your daily steps, sleep and resting heart rate to send one private summary a day to your Bloom server. It never writes to Health.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        ITSAppUsesNonExemptEncryption: false
+        # bloom://sign-in?link=... from `bun run auth:link --ios` (ADR 0018).
+        CFBundleURLTypes:
+          - CFBundleURLName: dev.bloom.app
+            CFBundleURLSchemes: [bloom]
+        # Plain HTTP only to the local network (localhost in the simulator) and
+        # to Tailscale names, whose traffic WireGuard already encrypts (ADR 0018).
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSExceptionDomains:
+            ts.net:
+              NSIncludesSubdomains: true
+              NSExceptionAllowsInsecureHTTPLoads: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.bloom.app
+        PRODUCT_NAME: Bloom
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        # The app target is UI code: isolate it to the main actor by default
+        # (SE-0466). BloomKit stays nonisolated.
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+
+  BloomShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: BloomShare
+    dependencies:
+      - target: BloomKit
+        embed: false
+    entitlements:
+      path: BloomShare/BloomShare.entitlements
+      properties:
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)dev.bloom.shared
+        com.apple.security.application-groups:
+          - group.dev.bloom
+    info:
+      path: BloomShare/Info.plist
+      properties:
+        CFBundleDisplayName: Bloom
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        BloomKeychainGroup: $(AppIdentifierPrefix)dev.bloom.shared
+        BloomAppGroup: group.dev.bloom
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsWebPageWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsImageWithMaxCount: 1
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSExceptionDomains:
+            ts.net:
+              NSIncludesSubdomains: true
+              NSExceptionAllowsInsecureHTTPLoads: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.bloom.app.share
+        PRODUCT_NAME: BloomShare
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+
+  BloomWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: BloomWidgets
+    dependencies:
+      - target: BloomKit
+        embed: false
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    entitlements:
+      path: BloomWidgets/BloomWidgets.entitlements
+      properties:
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)dev.bloom.shared
+        com.apple.security.application-groups:
+          - group.dev.bloom
+    info:
+      path: BloomWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Bloom
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        BloomKeychainGroup: $(AppIdentifierPrefix)dev.bloom.shared
+        BloomAppGroup: group.dev.bloom
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSExceptionDomains:
+            ts.net:
+              NSIncludesSubdomains: true
+              NSExceptionAllowsInsecureHTTPLoads: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.bloom.app.widgets
+        PRODUCT_NAME: BloomWidgets
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+
+  BloomKit:
+    type: framework
+    platform: iOS
+    sources:
+      - path: BloomKit
+    dependencies:
+      - package: OpenAPIRuntime
+        product: OpenAPIRuntime
+      - package: OpenAPIURLSession
+        product: OpenAPIURLSession
+    # Generates the typed client from API/openapi.json (a symlink to
+    # packages/api/openapi.json) on every build; see ADR 0017.
+    buildToolPlugins:
+      - plugin: OpenAPIGenerator
+        package: OpenAPIGenerator
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.bloom.kit
+        PRODUCT_NAME: BloomKit
+        GENERATE_INFOPLIST_FILE: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+
+  BloomTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: BloomTests
+      # Recorded chat streams, proven byte-exact by packages/api/test/sse-fixtures.test.ts.
+      - path: ../../packages/api/test/fixtures/chat-stream
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - target: Bloom
+      - target: BloomKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.bloom.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Bloom.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Bloom
+        BUNDLE_LOADER: $(TEST_HOST)
+
+  BloomUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: BloomUITests
+    dependencies:
+      - target: Bloom
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.bloom.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Bloom
+
+schemes:
+  Bloom:
+    build:
+      targets:
+        Bloom: all
+        BloomKit: all
+        BloomTests: [test]
+        BloomUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - name: BloomTests
+          parallelizable: false
+        - name: BloomUITests
+          parallelizable: false

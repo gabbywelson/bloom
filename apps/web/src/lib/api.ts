@@ -9,7 +9,7 @@
 import { goto } from "$app/navigation";
 import { resolve } from "$app/paths";
 import { BloomClient, Unauthorized } from "@bloom/api";
-import type { ChatStreamEvent, TaskId, ThreadId } from "@bloom/domain";
+import type { CaptureId, ChatStreamEvent, TaskId, ThreadId } from "@bloom/domain";
 import { Effect, Exit, ManagedRuntime, Schema, Stream } from "effect";
 import { session } from "./session.svelte";
 
@@ -67,6 +67,30 @@ export const completeTask = (id: TaskId) =>
     BloomClient.use((client) => client.tasks.complete({ params: { id } })).pipe(
       Effect.timeout(REQUEST_TIMEOUT),
     ),
+  );
+
+/** `GET /api/captures?status=new`: captures waiting for triage, in creation order. */
+export const loadNewCaptures = () =>
+  run(
+    BloomClient.use((client) => client.captures.list({ query: { status: ["new"] } })).pipe(
+      Effect.timeout(REQUEST_TIMEOUT),
+    ),
+  );
+
+/** `POST /api/captures` with a `{ text }` payload (ADR 0019). */
+export const captureText = (text: string) =>
+  run(
+    BloomClient.use((client) =>
+      client.captures.create({ payload: { kind: "text", payload: { text } } }),
+    ).pipe(Effect.timeout(REQUEST_TIMEOUT)),
+  );
+
+/** `PATCH /api/captures/:id` to `dismissed`. */
+export const dismissCapture = (id: CaptureId) =>
+  run(
+    BloomClient.use((client) =>
+      client.captures.update({ params: { id }, payload: { status: "dismissed" } }),
+    ).pipe(Effect.timeout(REQUEST_TIMEOUT)),
   );
 
 /**

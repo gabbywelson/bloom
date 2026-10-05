@@ -1,7 +1,7 @@
 # Architecture
 
 This document describes what is actually built as of the Phase 0 skeleton
-(2026-10-04). The product intent lives in `VISION.md`; individual decisions
+(2026-10-04) plus the iOS client and its server support (2026-10-05). The product intent lives in `VISION.md`; individual decisions
 live in `adrs/`. Where this file and an ADR disagree, the ADR is newer.
 
 ## Shape
@@ -13,9 +13,10 @@ server is Effect: services are `Context.Service` tags, wiring is Layers,
 errors are tagged, every service method has a span.
 
 ```
-browser (SvelteKit SPA, :5173 in dev)
-   │  same origin: Vite proxies /api → :3000  (ADR 0004)
-   ▼
+browser (SvelteKit SPA, :5173 in dev)      iPhone (SwiftUI app + share sheet + widgets)
+   │  same origin, cookie (ADR 0004)          │  Authorization: Bearer (ADR 0018)
+   │  Vite proxies /api → :3000               │  generated Swift client (ADR 0017)
+   ▼                                          ▼
 apps/server (Bun + Effect)                         ┌──────────────┐
    /api/auth/*  → Better Auth (passkeys, magic link) │ OTel collector│→ Jaeger
    /api/*       → HttpApi handlers ──┐               │   :4318       │→ Langfuse
@@ -23,7 +24,7 @@ apps/server (Bun + Effect)                         ┌────────�
                                      ▼
             AgentRunner ─ ModelProvider ─ Anthropic / OpenAI
                  │
-            domain services (Task, Thread, Message, EventSink)
+            domain services (Task, Thread, Message, Capture, Device, EventSink)
                  │
             Postgres (migrations, repos, pg-boss schema)
 ```
@@ -34,9 +35,11 @@ apps/server (Bun + Effect)                         ┌────────�
 apps/
   server/      Bun + Effect process: config, auth, http groups, jobs, main.ts, cli/
   web/         SvelteKit 3 + Svelte 5 runes SPA (adapter-static, PWA, Playwright e2e)
+  ios/         SwiftUI app (XcodeGen project.yml; Bloom app, BloomKit framework, tests)
 packages/
   domain/      Effect Schema entities (Model.Class), branded ids, unions, service tags
   api/         HttpApi contract, Authorization middleware tag, derived client, openapi.json
+               (+ the OpenAPI transform and the recorded chat-stream fixtures)
   db/          migrations, repositories, DB-backed service Layers, migrate/seed scripts
   agent/       ModelProvider + providers, routing, SOUL loader, context assembly, tools, runner
   pipeline/    scheduled jobs (heartbeat), interruption policy v1
@@ -79,20 +82,22 @@ used as the ordering tiebreaker (ADR 0012).
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `Task`        | title, notes, status (inbox/next/scheduled/waiting/done/dropped), due, scheduledFor, effort 1–5, energyKind, area, source, parentId, completedAt |
 | `Thread`      | kind (main/side/quest), parentThreadId, topic, contextScope (full/minimal; side defaults to minimal), status, lastMessageAt                      |
-| `Message`     | threadId, role, parts (jsonb array of `MessagePart`), runId                                                                                      |
+| `Message`     | threadId, role, parts (jsonb array of `MessagePart`), runId, traceId (the run's trace, ADR 0024)                                                 |
 | `MessagePart` | `text`, `image`, `tool_call`, `tool_result`, `ui_component` (discriminated on `type`)                                                            |
 | `UiComponent` | `option_picker`, `task_card`, `confirm`, `snooze_picker` (discriminated on `kind`)                                                               |
 | `Event`       | source, type, occurredAt, payload (jsonb), dedupeKey (partial unique); append-only                                                               |
 | `Nudge`       | triggerEventId, body, reasoning, channel, actions (non-empty), sentAt, outcome, outcomeAt, messageId                                             |
 | `Capture`     | kind (text/voice/share/image), payload, transcript, status, routedTo                                                                             |
+| `Device`      | platform, pushToken (write-only over the API), pushEnvironment, name, appVersion; upserted by token (ADR 0023)                                   |
 
 Not yet modelled: Routine, Chore, Area, Item, Memory, CheckIn (listed in
 VISION and the brief; deferred past Phase 0).
 
 Domain **service tags** (`TaskService`, `ThreadService`, `MessageService`,
-`EventSink`) are declared in `domain` with in-memory Layers for tests and
-implemented in `db`. Every task mutation writes an audit `Event`
-(`source: "domain"`) in the same transaction. `ChatStreamEvent` is the SSE
+`CaptureService`, `DeviceService`, `EventSink`) are declared in `domain` with in-memory Layers
+for tests and implemented in `db`. Every task and capture mutation writes an
+audit `Event` (`source: "domain"`) in the same transaction; capture events
+never include the payload (ADR 0019). `ChatStreamEvent` is the SSE
 contract between server and clients.
 
 ## How a message flows (read this in ten minutes)
@@ -164,6 +169,36 @@ POST` (the Anthropic request) → `MessageService.replaceParts` →
    API `/api/v3/traces`) and, when the `langfuse` profile is up, to Langfuse
    (ADR 0005, 0010). The Playwright flow asserts this shape.
 
+## The iOS client
+
+`apps/ios` is a SwiftUI app (iOS 26+) described by XcodeGen's `project.yml`;
+`bun run ios:test` generates the project, builds and runs unit and UI tests
+on the simulator. Targets: `Bloom` (app), `BloomKit` (framework shared with
+the extensions: generated API client, models, auth, design system, pure
+logic), `BloomShare` (share extension), `BloomWidgets` (tasks widget and
+capture control), `BloomTests`, `BloomUITests`.
+
+- **Contract.** swift-openapi-generator builds the client from the committed
+  `packages/api/openapi.json` at compile time (ADR 0017). An OpenAPI
+  transform on `BloomApi` makes that document generator-friendly (named
+  components, discriminators, `ChatStreamEvent` components, nullable and
+  one-literal rewrites). `BloomAPI` wraps the generated client and maps
+  errors; only the SSE framing (`ChatStream.events`) and the two Better Auth
+  calls are hand-written. Recorded SSE streams in
+  `packages/api/test/fixtures/chat-stream` are tested on both sides.
+- **Session.** A bearer token from the magic link, in a Keychain access group
+  shared with the extensions, plus the server origin in an app group
+  (ADR 0018, 0020). Any 401 returns to sign-in.
+- **Chat** folds `ChatStreamEvent`s with `ChatTranscript`, the twin of the
+  web's `chat.ts`; `tasks_changed` refreshes the task list and the widget.
+- **Capture** from the share sheet, an in-app field, the "Capture to Bloom"
+  App Intent and the capture control (`POST /api/captures`, ADR 0019, 0022).
+- **Health** sends one private `healthkit` / `daily_summary` event per
+  completed day when enabled (ADR 0021). **Push**: devices register their
+  APNs token behind a Labs flag; nothing sends yet (ADR 0023).
+- **Demo mode** (`-BloomDemo`, debug builds) swaps the transport for an
+  in-process `DemoServer` so UI tests run without a server or a model.
+
 ## Auth
 
 Single user, passkeys only. `bun run db:seed` inserts the owner row in Better
@@ -174,6 +209,22 @@ offers passkey sign-in with WebAuthn conditional UI. Runtime user creation
 is blocked (`disableSignUp` plus a database hook). Everything auth lives
 under `/api/auth`; all other API groups except `health` require a session
 (ADR 0003, 0004, 0015).
+
+The iOS app uses the same session model through Better Auth's `bearer`
+plugin (ADR 0018): `bun run auth:link --ios` prints `bloom://sign-in?link=…`;
+the app opens the magic link itself, keeps the signed token from the
+`set-auth-token` response header in the Keychain and sends
+`Authorization: Bearer` on every call. The `Authorization` middleware
+forwards the cookie and a Bearer header (nothing else) to `getSession`.
+
+## Client ingestion
+
+`POST /api/events` lets clients append to the event log through `EventSink`
+(idempotent by `dedupeKey`; the `domain` and `system` sources are reserved
+for the server). The iOS app sends one `healthkit` / `daily_summary` event per
+completed day when the user opts in (ADR 0021). These events are
+private-tier: nothing reads them into a model context yet, and nothing may
+until context assembly filters by sensitivity.
 
 ## Jobs
 
@@ -215,6 +266,7 @@ executable form of the Phase 0 done-condition.
 - Integration toolkits are not merged into the agent's toolkit yet.
 - Routine, Chore, Area, Item, Memory, CheckIn entities; sensitivity tiers
   are typed but no `Memory` data exists to filter.
-- iOS client; device tokens.
-- The "why did Bloom do this?" debug panel (trace ids are available on
-  every run already).
+- Push sending (devices register their APNs tokens; nothing sends yet, ADR 0023).
+- The "why did Bloom do this?" debug panel: assistant messages carry their
+  trace id and the web links it to Jaeger (ADR 0024); the panel for nudges
+  (trigger event, policy decision) waits for nudges.

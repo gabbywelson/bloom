@@ -5,7 +5,9 @@ import { Authorization } from "../auth.ts";
 import { ThreadNotFound404 } from "./errors.ts";
 
 /** Body of `POST /api/threads/:id/messages`: the user's turn as plain text. */
-export const SendMessage = Schema.Struct({ text: Schema.NonEmptyString });
+export const SendMessage = Schema.Struct({ text: Schema.NonEmptyString }).annotate({
+  identifier: "SendMessage",
+});
 export type SendMessage = typeof SendMessage.Type;
 
 /**

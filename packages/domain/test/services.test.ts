@@ -1,6 +1,14 @@
 import { describe, expect, it } from "bun:test";
 import { DateTime, Effect, Layer, Schema } from "effect";
 import {
+  Capture,
+  CaptureId,
+  CaptureNotFound,
+  CaptureService,
+  Device,
+  DeviceJson,
+  DeviceNotFound,
+  DeviceService,
   EventSink,
   MessageId,
   MessageService,
@@ -351,6 +359,117 @@ describe("EventSink.layerMemory", () => {
         });
         expect(noKey._tag).toBe("Inserted");
         expect(noKeyAgain._tag).toBe("Inserted");
+      }),
+    ));
+});
+
+describe("CaptureService.layerMemory", () => {
+  const runCaptures = <A, E>(effect: Effect.Effect<A, E, CaptureService>) =>
+    Effect.runPromise(effect.pipe(Effect.provide(CaptureService.layerMemory)));
+
+  it("creates with defaults, lists in creation order, filters by status and triages", () =>
+    runCaptures(
+      Effect.gen(function* () {
+        const captures = yield* CaptureService;
+        const decode = Schema.decodeSync(Capture.jsonCreate);
+        const link = yield* captures.create(
+          decode({ kind: "share", payload: { url: "https://example.com/article" } }),
+          "user",
+        );
+        expect(link.status).toBe("new");
+        expect(link.transcript).toBeNull();
+        expect(link.routedTo).toBeNull();
+        const note = yield* captures.create(
+          decode({ kind: "text", payload: { text: "Buy stamps" } }),
+          "user",
+        );
+
+        expect((yield* captures.list()).map((capture) => capture.id)).toEqual([link.id, note.id]);
+
+        const routed = yield* captures.update(
+          note.id,
+          { status: "routed", routedTo: "task:t1" },
+          "agent",
+        );
+        expect(routed.status).toBe("routed");
+        expect(routed.routedTo).toBe("task:t1");
+        expect(routed.payload).toEqual({ text: "Buy stamps" });
+        expect(routed.kind).toBe("text");
+
+        expect((yield* captures.list({ status: ["new"] })).map((capture) => capture.id)).toEqual([
+          link.id,
+        ]);
+        expect((yield* captures.get(link.id)).payload).toEqual({
+          url: "https://example.com/article",
+        });
+      }),
+    ));
+
+  it("fails with CaptureNotFound for unknown ids", () =>
+    runCaptures(
+      Effect.gen(function* () {
+        const captures = yield* CaptureService;
+        const missing = Schema.decodeSync(CaptureId)("019a0000-0000-7000-8000-00000000dead");
+        const error = yield* Effect.flip(captures.get(missing));
+        expect(error._tag).toBe("CaptureNotFound");
+        const patchError = yield* Effect.flip(
+          captures.update(missing, { status: "dismissed" }, "user"),
+        );
+        expect(patchError).toBeInstanceOf(CaptureNotFound);
+      }),
+    ));
+});
+
+describe("DeviceService.layerMemory", () => {
+  const runDevices = <A, E>(effect: Effect.Effect<A, E, DeviceService>) =>
+    Effect.runPromise(effect.pipe(Effect.provide(DeviceService.layerMemory)));
+  const decodeRegister = Schema.decodeSync(Device.jsonCreate);
+
+  it("registers once per push token and updates on re-registration", () =>
+    runDevices(
+      Effect.gen(function* () {
+        const devices = yield* DeviceService;
+        const first = yield* devices.register(
+          decodeRegister({ platform: "ios", pushToken: "abc123", pushEnvironment: "sandbox" }),
+        );
+        expect(first.name).toBeNull();
+        const again = yield* devices.register(
+          decodeRegister({
+            platform: "ios",
+            pushToken: "abc123",
+            pushEnvironment: "production",
+            name: "Gabby's iPhone",
+            appVersion: "0.1.0 (1)",
+          }),
+        );
+        expect(again.id).toBe(first.id);
+        expect(again.pushEnvironment).toBe("production");
+        expect(again.name).toBe("Gabby's iPhone");
+        const other = yield* devices.register(
+          decodeRegister({ platform: "ios", pushToken: "def456", pushEnvironment: "sandbox" }),
+        );
+        expect((yield* devices.list).map((device) => device.id)).toEqual([first.id, other.id]);
+
+        yield* devices.remove(first.id);
+        expect((yield* devices.list).map((device) => device.id)).toEqual([other.id]);
+        expect(yield* Effect.flip(devices.remove(first.id))).toBeInstanceOf(DeviceNotFound);
+      }),
+    ));
+
+  it("never puts the push token in the JSON shape", () =>
+    runDevices(
+      Effect.gen(function* () {
+        const devices = yield* DeviceService;
+        const device = yield* devices.register(
+          decodeRegister({
+            platform: "ios",
+            pushToken: "secret-token",
+            pushEnvironment: "sandbox",
+          }),
+        );
+        const json = Schema.encodeSync(DeviceJson)(device);
+        expect(Object.keys(json)).not.toContain("pushToken");
+        expect(JSON.stringify(json)).not.toContain("secret-token");
       }),
     ));
 });

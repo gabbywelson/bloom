@@ -3,7 +3,13 @@
  * domain `layerMemory` layers; the real handlers live in `apps/server`.
  */
 import {
+  Capture,
+  CaptureService,
   type ChatStreamEvent,
+  Device,
+  DeviceService,
+  EventIngest,
+  EventSink,
   MessageService,
   Task,
   TaskService,
@@ -15,10 +21,14 @@ import { DateTime, Effect, Layer, Schema, Stream } from "effect";
 import { HttpApiBuilder } from "effect/http-api";
 import { BloomApi } from "../src/api.ts";
 import { Authorization, type AuthUser, CurrentUser, Unauthorized } from "../src/auth.ts";
+import { InvalidEventSource, RESERVED_EVENT_SOURCES } from "../src/groups/events.ts";
 import { decodePayload } from "../src/payload.ts";
 
 const decodeTaskCreate = decodePayload(Task.jsonCreate);
+const decodeCaptureCreate = decodePayload(Capture.jsonCreate);
 const decodeThreadCreate = decodePayload(Thread.jsonCreate);
+const decodeEventIngest = decodePayload(EventIngest);
+const decodeDeviceRegister = decodePayload(Device.jsonCreate);
 
 /** The single owner every allowed request runs as. */
 export const fixedUser: AuthUser = {
@@ -128,15 +138,76 @@ export const TasksHandlers = HttpApiBuilder.group(
   }),
 );
 
-/** Every group's test handlers over fresh in-memory domain services. */
-export const TestHandlers = Layer.mergeAll(
+export const CapturesHandlers = HttpApiBuilder.group(
+  BloomApi,
+  "captures",
+  Effect.fn(function* (handlers) {
+    const captures = yield* CaptureService;
+    return handlers.handleAll({
+      create: ({ payload }) =>
+        Effect.flatMap(decodeCaptureCreate(payload), (input) => captures.create(input, "user")),
+      list: ({ query }) =>
+        captures.list(query.status === undefined ? undefined : { status: query.status }),
+      get: ({ params }) => captures.get(params.id),
+      update: ({ params, payload }) => captures.update(params.id, payload, "user"),
+    });
+  }),
+);
+
+/** Test version of `POST /api/events`, with the same reserved-source rule as the server. */
+export const EventsHandlers = HttpApiBuilder.group(
+  BloomApi,
+  "events",
+  Effect.fn(function* (handlers) {
+    const sink = yield* EventSink;
+    return handlers.handle(
+      "ingest",
+      Effect.fn(function* ({ payload }) {
+        const input = yield* decodeEventIngest(payload);
+        if (RESERVED_EVENT_SOURCES.includes(input.source)) {
+          return yield* new InvalidEventSource({ message: "reserved" });
+        }
+        return yield* sink.ingest(input);
+      }),
+    );
+  }),
+);
+
+export const DevicesHandlers = HttpApiBuilder.group(
+  BloomApi,
+  "devices",
+  Effect.fn(function* (handlers) {
+    const devices = yield* DeviceService;
+    return handlers.handleAll({
+      register: ({ payload }) => Effect.flatMap(decodeDeviceRegister(payload), devices.register),
+      list: () => devices.list,
+      remove: ({ params }) => devices.remove(params.id),
+    });
+  }),
+);
+
+/** Fresh in-memory domain services for one test. */
+export const MemoryServices = Layer.mergeAll(
+  TaskService.layerMemory,
+  ThreadService.layerMemory,
+  MessageService.layerMemory,
+  CaptureService.layerMemory,
+  EventSink.layerMemory,
+  DeviceService.layerMemory,
+);
+
+/** Every group but `messages`, so a test can supply its own chat stream. */
+export const HandlersWithoutMessages = Layer.mergeAll(
   HealthHandlers,
   MeHandlers,
   ThreadsHandlers,
-  MessagesHandlers,
   TasksHandlers,
-).pipe(
-  Layer.provide(
-    Layer.mergeAll(TaskService.layerMemory, ThreadService.layerMemory, MessageService.layerMemory),
-  ),
+  CapturesHandlers,
+  EventsHandlers,
+  DevicesHandlers,
+);
+
+/** Every group's test handlers over fresh in-memory domain services. */
+export const TestHandlers = Layer.mergeAll(HandlersWithoutMessages, MessagesHandlers).pipe(
+  Layer.provide(MemoryServices),
 );

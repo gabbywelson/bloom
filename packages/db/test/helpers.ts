@@ -1,4 +1,11 @@
-import { EventSink, MessageService, TaskService, ThreadService } from "@bloom/domain";
+import {
+  CaptureService,
+  DeviceService,
+  EventSink,
+  MessageService,
+  TaskService,
+  ThreadService,
+} from "@bloom/domain";
 import { PgClient } from "@effect/sql-pg";
 import { Effect, Layer, ManagedRuntime, Redacted } from "effect";
 import { SqlClient } from "effect/sql";
@@ -25,9 +32,15 @@ export const ensureTestDatabase = Effect.gen(function* () {
   }
 }).pipe(Effect.provide(PgClient.layer({ url: Redacted.make(adminUrl.toString()) })));
 
-export type DbServices = TaskService | ThreadService | MessageService | EventSink;
+export type DbServices =
+  | CaptureService
+  | DeviceService
+  | TaskService
+  | ThreadService
+  | MessageService
+  | EventSink;
 
-/** Migrated test database plus the four domain services and the SqlClient. */
+/** Migrated test database plus every domain service and the SqlClient. */
 export const TestDbLive = DbServicesLive.pipe(
   Layer.provideMerge(MigratorLive),
   Layer.provideMerge(makePgLayer(Redacted.make(TEST_DATABASE_URL))),
@@ -38,5 +51,5 @@ export const makeTestRuntime = () => ManagedRuntime.make(TestDbLive);
 /** Empties every Bloom table (not the Better Auth ones) between tests. */
 export const truncateAll = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient;
-  yield* sql`TRUNCATE tasks, threads, messages, events, nudges, captures`;
+  yield* sql`TRUNCATE tasks, threads, messages, events, nudges, captures, devices`;
 });

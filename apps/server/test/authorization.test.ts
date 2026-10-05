@@ -73,22 +73,44 @@ describe("Authorization middleware", () => {
     expect(result).toMatchObject({ _tag: "Unauthorized", message: SIGN_IN_MESSAGE });
   });
 
-  it("forwards only the cookie header to Better Auth", () => {
+  it("forwards the cookie and a bearer authorization header to Better Auth, nothing else", () => {
     const request = HttpServerRequest.fromWeb(
       new Request("http://bloom.test/api/me", {
         headers: {
           cookie: "bloom.session_token=abc",
-          authorization: "Bearer nope",
+          authorization: "Bearer tok.sig",
           "x-extra": "1",
         },
       }),
     );
     const headers = sessionHeaders(request);
     expect(headers.get("cookie")).toBe("bloom.session_token=abc");
-    expect(headers.has("authorization")).toBe(false);
+    expect(headers.get("authorization")).toBe("Bearer tok.sig");
     expect(headers.has("x-extra")).toBe(false);
 
     const bare = sessionHeaders(HttpServerRequest.fromWeb(new Request("http://bloom.test/api/me")));
     expect(Array.from(bare.keys())).toEqual([]);
+  });
+
+  it("drops authorization headers that are not bearer tokens", () => {
+    for (const authorization of [
+      "Basic Z2FiYnk6aHVudGVyMg==",
+      "Bearer",
+      "Bearer   ",
+      "Token abc",
+    ]) {
+      const headers = sessionHeaders(
+        HttpServerRequest.fromWeb(
+          new Request("http://bloom.test/api/me", { headers: { authorization } }),
+        ),
+      );
+      expect(headers.has("authorization")).toBe(false);
+    }
+    const lower = sessionHeaders(
+      HttpServerRequest.fromWeb(
+        new Request("http://bloom.test/api/me", { headers: { authorization: "bearer tok.sig" } }),
+      ),
+    );
+    expect(lower.get("authorization")).toBe("bearer tok.sig");
   });
 });

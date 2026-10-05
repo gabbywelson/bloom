@@ -11,15 +11,23 @@ export const TaskStatus = Schema.Literals([
   "waiting",
   "done",
   "dropped",
-]);
+]).annotate({ identifier: "TaskStatus" });
 export type TaskStatus = typeof TaskStatus.Type;
 
 /** Kind of energy a task needs, so Bloom can match tasks to how Gabby feels. */
-export const EnergyKind = Schema.Literals(["focus", "admin", "physical", "social", "rest"]);
+export const EnergyKind = Schema.Literals([
+  "focus",
+  "admin",
+  "physical",
+  "social",
+  "rest",
+]).annotate({ identifier: "EnergyKind" });
 export type EnergyKind = typeof EnergyKind.Type;
 
 /** Where a task came from. */
-export const TaskSource = Schema.Literals(["user", "agent", "import", "integration"]);
+export const TaskSource = Schema.Literals(["user", "agent", "import", "integration"]).annotate({
+  identifier: "TaskSource",
+});
 export type TaskSource = typeof TaskSource.Type;
 
 /** Effort in spoons, 1 (trivial) to 5 (a whole day's energy). */
@@ -46,6 +54,14 @@ export class Task extends Model.Class<Task>("Task")({
   createdAt: Model.DateTimeInsertFromDate,
   updatedAt: Model.DateTimeUpdateFromDate,
 }) {}
+
+/**
+ * Wire schemas with stable names. The `identifier` becomes the OpenAPI
+ * component name (`Task`, `TaskUpdate`), which is what generated clients
+ * (the Swift app) call these types. Use them wherever the API exposes a task.
+ */
+export const TaskJson = Task.json.annotate({ identifier: "Task" });
+export const TaskUpdateJson = Task.jsonUpdate.annotate({ identifier: "TaskUpdate" });
 
 /** Client payload for creating a task (decoded; defaults applied). */
 export type TaskCreate = typeof Task.jsonCreate.Type;

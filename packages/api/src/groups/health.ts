@@ -6,7 +6,7 @@ export const HealthStatus = Schema.Struct({
   status: Schema.Literal("ok"),
   service: Schema.Literal("bloom-server"),
   time: Schema.DateTimeUtcFromString,
-});
+}).annotate({ identifier: "HealthStatus" });
 export type HealthStatus = typeof HealthStatus.Type;
 
 /** Public group (no `Authorization`): `GET /api/health`. */

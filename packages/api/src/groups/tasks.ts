@@ -1,4 +1,4 @@
-import { Task, TaskId, TaskStatus } from "@bloom/domain";
+import { Task, TaskId, TaskJson, TaskStatus, TaskUpdateJson } from "@bloom/domain";
 import { Schema } from "effect";
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import { Authorization } from "../auth.ts";
@@ -15,7 +15,9 @@ export const TaskListQuery = {
  * on the wire. Handlers turn it into a `TaskCreate` with
  * `decodePayload(Task.jsonCreate)`, which applies the defaults.
  */
-export const TaskCreateInput = Schema.toEncoded(Task.jsonCreate);
+export const TaskCreateInput = Schema.toEncoded(Task.jsonCreate).annotate({
+  identifier: "TaskCreate",
+});
 export type TaskCreateInput = typeof TaskCreateInput.Type;
 
 /** Task CRUD. All endpoints require `Authorization`; mutations go through `TaskService`. */
@@ -23,7 +25,7 @@ export class TasksGroup extends HttpApiGroup.make("tasks")
   .add(
     HttpApiEndpoint.get("list", "/", {
       query: TaskListQuery,
-      success: Schema.Array(Task.json),
+      success: Schema.Array(TaskJson),
     }).annotateMerge(
       OpenApi.annotations({
         summary: "List tasks",
@@ -32,7 +34,7 @@ export class TasksGroup extends HttpApiGroup.make("tasks")
     ),
     HttpApiEndpoint.post("create", "/", {
       payload: TaskCreateInput,
-      success: Task.json,
+      success: TaskJson,
     }).annotateMerge(
       OpenApi.annotations({
         summary: "Create a task",
@@ -42,7 +44,7 @@ export class TasksGroup extends HttpApiGroup.make("tasks")
     ),
     HttpApiEndpoint.get("get", "/:id", {
       params: { id: TaskId },
-      success: Task.json,
+      success: TaskJson,
       error: TaskNotFound404,
     }).annotateMerge(
       OpenApi.annotations({
@@ -52,8 +54,8 @@ export class TasksGroup extends HttpApiGroup.make("tasks")
     ),
     HttpApiEndpoint.patch("update", "/:id", {
       params: { id: TaskId },
-      payload: Task.jsonUpdate,
-      success: Task.json,
+      payload: TaskUpdateJson,
+      success: TaskJson,
       error: TaskNotFound404,
     }).annotateMerge(
       OpenApi.annotations({
@@ -64,7 +66,7 @@ export class TasksGroup extends HttpApiGroup.make("tasks")
     ),
     HttpApiEndpoint.post("complete", "/:id/complete", {
       params: { id: TaskId },
-      success: Task.json,
+      success: TaskJson,
       error: TaskNotFound404,
     }).annotateMerge(
       OpenApi.annotations({

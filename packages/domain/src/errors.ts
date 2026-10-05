@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { MessageId, TaskId, ThreadId } from "./ids.ts";
+import { CaptureId, DeviceId, MessageId, TaskId, ThreadId } from "./ids.ts";
 
 /** No task with this id. */
 export class TaskNotFound extends Schema.TaggedError<TaskNotFound>()("TaskNotFound", {
@@ -14,4 +14,14 @@ export class ThreadNotFound extends Schema.TaggedError<ThreadNotFound>()("Thread
 /** No message with this id. */
 export class MessageNotFound extends Schema.TaggedError<MessageNotFound>()("MessageNotFound", {
   id: MessageId,
+}) {}
+
+/** No capture with this id. */
+export class CaptureNotFound extends Schema.TaggedError<CaptureNotFound>()("CaptureNotFound", {
+  id: CaptureId,
+}) {}
+
+/** No device with this id. */
+export class DeviceNotFound extends Schema.TaggedError<DeviceNotFound>()("DeviceNotFound", {
+  id: DeviceId,
 }) {}

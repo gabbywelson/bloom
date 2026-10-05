@@ -18,6 +18,12 @@
 #
 # Every credential below is a local-development default for throwaway
 # containers. Override via environment variables if this ever leaves localhost.
+
+# A fixed project name: without it Compose derives one from the directory, so
+# running infra:up from a git worktree starts a second, empty stack that
+# fights the first for the same ports.
+name: bloom
+
 services:
   postgres:
     image: docker.io/postgres:17

@@ -1,0 +1,14 @@
+data: {"type":"message_start","messageId":"019a0000-0000-7000-8000-0000000000b2","threadId":"019a0000-0000-7000-8000-0000000000a1"}
+
+data: {"type":"tool_call","messageId":"019a0000-0000-7000-8000-0000000000b2","toolCallId":"toolu_01","name":"create_task","args":{"title":"Water the ferns","effort":1}}
+
+data: {"type":"tool_result","messageId":"019a0000-0000-7000-8000-0000000000b2","toolCallId":"toolu_01","name":"create_task","ok":true}
+
+data: {"type":"tasks_changed"}
+
+data: {"type":"text_delta","messageId":"019a0000-0000-7000-8000-0000000000b2","delta":"Added "}
+
+data: {"type":"text_delta","messageId":"019a0000-0000-7000-8000-0000000000b2","delta":"“Water the ferns”."}
+
+data: {"type":"message_end","message":{"id":"019a0000-0000-7000-8000-0000000000b2","threadId":"019a0000-0000-7000-8000-0000000000a1","role":"assistant","parts":[{"type":"tool_call","id":"toolu_01","name":"create_task","args":{"title":"Water the ferns","effort":1}},{"type":"tool_result","toolCallId":"toolu_01","name":"create_task","ok":true,"result":{"id":"019a0000-0000-7000-8000-0000000000c3","title":"Water the ferns","status":"inbox"}},{"type":"text","text":"Added “Water the ferns”."},{"type":"ui_component","component":{"kind":"task_card","taskId":"019a0000-0000-7000-8000-0000000000c3","title":"Water the ferns","status":"inbox","due":null}}],"runId":null,"traceId":"4bf92f3577b34da6a3ce929d0e0e4736","createdAt":"2026-10-05T07:30:00.000Z"}}
+

@@ -138,11 +138,17 @@ export class AgentRunner extends Context.Service<AgentRunner, AgentRunnerShape>(
         });
 
         const runId = yield* newRunId;
+        // The `agent.run` trace, so the reply can link to exactly this run (ADR 0024).
+        const traceId = yield* Effect.currentSpan.pipe(
+          Effect.map((span) => span.traceId),
+          Effect.orElseSucceed(() => null),
+        );
         const assistant = yield* messages.append({
           threadId: thread.id,
           role: "assistant",
           parts: [],
           runId,
+          traceId,
         });
         yield* emit({ type: "message_start", messageId: assistant.id, threadId: thread.id });
 

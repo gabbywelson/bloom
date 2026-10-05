@@ -5,7 +5,9 @@ import { MessageId, RunId, ThreadId } from "./ids.ts";
 import { MessagePart } from "./message-part.ts";
 
 /** Who authored a message turn. */
-export const MessageRole = Schema.Literals(["user", "assistant", "system", "tool"]);
+export const MessageRole = Schema.Literals(["user", "assistant", "system", "tool"]).annotate({
+  identifier: "MessageRole",
+});
 export type MessageRole = typeof MessageRole.Type;
 
 /** Concatenates the text of all `text` parts, in order, separated by newlines. */
@@ -25,6 +27,8 @@ export class Message extends Model.Class<Message>("Message")({
   role: Immutable(MessageRole),
   parts: Patchable(Schema.Array(MessagePart)),
   runId: Nullable(RunId),
+  /** OpenTelemetry trace of the run that wrote it, for the "why did Bloom do this?" link (ADR 0024). */
+  traceId: Nullable(Schema.String),
   createdAt: Model.DateTimeInsertFromDate,
 }) {
   /** Text content of a message: all `text` parts joined with newlines. */
@@ -33,11 +37,15 @@ export class Message extends Model.Class<Message>("Message")({
   }
 }
 
+/** `Message.json` under its OpenAPI component name (see `TaskJson`). */
+export const MessageJson = Message.json.annotate({ identifier: "Message" });
+
 /** Input for `MessageService.append`; `runId` may be omitted. */
 export const MessageAppend = Schema.Struct({
   threadId: ThreadId,
   role: MessageRole,
   parts: Schema.Array(MessagePart),
   runId: Schema.optionalKey(Schema.NullOr(RunId)),
+  traceId: Schema.optionalKey(Schema.NullOr(Schema.String)),
 });
 export type MessageAppend = typeof MessageAppend.Type;

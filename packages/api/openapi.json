@@ -16,34 +16,11 @@
         "security": [],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "HealthStatus",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "ok"
-                      ]
-                    },
-                    "service": {
-                      "type": "string",
-                      "enum": [
-                        "bloom-server"
-                      ]
-                    },
-                    "time": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "service",
-                    "time"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/HealthStatus"
                 }
               }
             }
@@ -63,28 +40,11 @@
         "security": [],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "AuthUser",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "email",
-                    "name"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/AuthUser"
                 }
               }
             }
@@ -120,83 +80,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "main",
-                          "side",
-                          "quest"
-                        ]
-                      },
-                      "parentThreadId": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "topic": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "contextScope": {
-                        "type": "string",
-                        "enum": [
-                          "full",
-                          "minimal"
-                        ]
-                      },
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "active",
-                          "archived"
-                        ]
-                      },
-                      "lastMessageAt": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "createdAt": {
-                        "type": "string"
-                      },
-                      "updatedAt": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "kind",
-                      "parentThreadId",
-                      "topic",
-                      "contextScope",
-                      "status",
-                      "lastMessageAt",
-                      "createdAt",
-                      "updatedAt"
-                    ],
-                    "additionalProperties": false,
-                    "title": "Thread.json"
+                    "$ref": "#/components/schemas/Thread"
                   }
                 }
               }
@@ -225,87 +109,11 @@
         "security": [],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Thread",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "main",
-                        "side",
-                        "quest"
-                      ]
-                    },
-                    "parentThreadId": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "topic": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "contextScope": {
-                      "type": "string",
-                      "enum": [
-                        "full",
-                        "minimal"
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "active",
-                        "archived"
-                      ]
-                    },
-                    "lastMessageAt": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    },
-                    "updatedAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "kind",
-                    "parentThreadId",
-                    "topic",
-                    "contextScope",
-                    "status",
-                    "lastMessageAt",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "additionalProperties": false,
-                  "title": "Thread.json"
+                  "$ref": "#/components/schemas/Thread"
                 }
               }
             }
@@ -327,54 +135,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "kind": {
-                    "type": "string",
-                    "enum": [
-                      "side",
-                      "quest"
-                    ]
-                  },
-                  "parentThreadId": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "topic": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "contextScope": {
-                    "type": "string",
-                    "enum": [
-                      "full",
-                      "minimal"
-                    ]
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "active",
-                      "archived"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/ThreadCreate"
               }
             }
           },
@@ -392,87 +153,11 @@
         "security": [],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Thread",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "main",
-                        "side",
-                        "quest"
-                      ]
-                    },
-                    "parentThreadId": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "topic": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "contextScope": {
-                      "type": "string",
-                      "enum": [
-                        "full",
-                        "minimal"
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "active",
-                        "archived"
-                      ]
-                    },
-                    "lastMessageAt": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    },
-                    "updatedAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "kind",
-                    "parentThreadId",
-                    "topic",
-                    "contextScope",
-                    "status",
-                    "lastMessageAt",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "additionalProperties": false,
-                  "title": "Thread.json"
+                  "$ref": "#/components/schemas/Thread"
                 }
               }
             }
@@ -511,87 +196,11 @@
         "security": [],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Thread",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "main",
-                        "side",
-                        "quest"
-                      ]
-                    },
-                    "parentThreadId": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "topic": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "contextScope": {
-                      "type": "string",
-                      "enum": [
-                        "full",
-                        "minimal"
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "active",
-                        "archived"
-                      ]
-                    },
-                    "lastMessageAt": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    },
-                    "updatedAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "kind",
-                    "parentThreadId",
-                    "topic",
-                    "contextScope",
-                    "status",
-                    "lastMessageAt",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "additionalProperties": false,
-                  "title": "Thread.json"
+                  "$ref": "#/components/schemas/Thread"
                 }
               }
             }
@@ -640,15 +249,11 @@
             "name": "limit",
             "in": "query",
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "pattern": "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$"
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[+-]?\\d*\\.?\\d+(?:[Ee][+-]?\\d+)?$"
             },
             "required": false
           }
@@ -662,339 +267,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "threadId": {
-                        "type": "string"
-                      },
-                      "role": {
-                        "type": "string",
-                        "enum": [
-                          "user",
-                          "assistant",
-                          "system",
-                          "tool"
-                        ]
-                      },
-                      "parts": {
-                        "type": "array",
-                        "items": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "text"
-                                  ]
-                                },
-                                "text": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "type",
-                                "text"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "image"
-                                  ]
-                                },
-                                "url": {
-                                  "type": "string"
-                                },
-                                "alt": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "type",
-                                "url"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "tool_call"
-                                  ]
-                                },
-                                "id": {
-                                  "type": "string"
-                                },
-                                "name": {
-                                  "type": "string"
-                                },
-                                "args": {}
-                              },
-                              "required": [
-                                "type",
-                                "id",
-                                "name",
-                                "args"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "tool_result"
-                                  ]
-                                },
-                                "toolCallId": {
-                                  "type": "string"
-                                },
-                                "name": {
-                                  "type": "string"
-                                },
-                                "ok": {
-                                  "type": "boolean"
-                                },
-                                "result": {}
-                              },
-                              "required": [
-                                "type",
-                                "toolCallId",
-                                "name",
-                                "ok",
-                                "result"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "ui_component"
-                                  ]
-                                },
-                                "component": {
-                                  "anyOf": [
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "kind": {
-                                          "type": "string",
-                                          "enum": [
-                                            "option_picker"
-                                          ]
-                                        },
-                                        "prompt": {
-                                          "type": "string"
-                                        },
-                                        "options": {
-                                          "type": "array",
-                                          "items": {
-                                            "type": "object",
-                                            "properties": {
-                                              "id": {
-                                                "type": "string"
-                                              },
-                                              "label": {
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "id",
-                                              "label"
-                                            ],
-                                            "additionalProperties": false
-                                          }
-                                        }
-                                      },
-                                      "required": [
-                                        "kind",
-                                        "prompt",
-                                        "options"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "kind": {
-                                          "type": "string",
-                                          "enum": [
-                                            "task_card"
-                                          ]
-                                        },
-                                        "taskId": {
-                                          "type": "string"
-                                        },
-                                        "title": {
-                                          "type": "string"
-                                        },
-                                        "status": {
-                                          "type": "string",
-                                          "enum": [
-                                            "inbox",
-                                            "next",
-                                            "scheduled",
-                                            "waiting",
-                                            "done",
-                                            "dropped"
-                                          ]
-                                        },
-                                        "due": {
-                                          "anyOf": [
-                                            {
-                                              "type": "string"
-                                            },
-                                            {
-                                              "type": "null"
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "kind",
-                                        "taskId",
-                                        "title",
-                                        "status",
-                                        "due"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "kind": {
-                                          "type": "string",
-                                          "enum": [
-                                            "confirm"
-                                          ]
-                                        },
-                                        "prompt": {
-                                          "type": "string"
-                                        },
-                                        "confirmLabel": {
-                                          "type": "string"
-                                        },
-                                        "cancelLabel": {
-                                          "type": "string"
-                                        },
-                                        "action": {
-                                          "type": "object",
-                                          "properties": {
-                                            "name": {
-                                              "type": "string"
-                                            },
-                                            "args": {}
-                                          },
-                                          "required": [
-                                            "name",
-                                            "args"
-                                          ],
-                                          "additionalProperties": false
-                                        }
-                                      },
-                                      "required": [
-                                        "kind",
-                                        "prompt",
-                                        "confirmLabel",
-                                        "cancelLabel",
-                                        "action"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "kind": {
-                                          "type": "string",
-                                          "enum": [
-                                            "snooze_picker"
-                                          ]
-                                        },
-                                        "prompt": {
-                                          "type": "string"
-                                        },
-                                        "choices": {
-                                          "type": "array",
-                                          "items": {
-                                            "type": "object",
-                                            "properties": {
-                                              "id": {
-                                                "type": "string"
-                                              },
-                                              "label": {
-                                                "type": "string"
-                                              },
-                                              "until": {
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "id",
-                                              "label",
-                                              "until"
-                                            ],
-                                            "additionalProperties": false
-                                          }
-                                        }
-                                      },
-                                      "required": [
-                                        "kind",
-                                        "prompt",
-                                        "choices"
-                                      ],
-                                      "additionalProperties": false
-                                    }
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "type",
-                                "component"
-                              ],
-                              "additionalProperties": false
-                            }
-                          ]
-                        }
-                      },
-                      "runId": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "createdAt": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "threadId",
-                      "role",
-                      "parts",
-                      "runId",
-                      "createdAt"
-                    ],
-                    "additionalProperties": false,
-                    "title": "Message.json"
+                    "$ref": "#/components/schemas/Message"
                   }
                 }
               }
@@ -1049,21 +322,16 @@
                   "type": "object",
                   "properties": {
                     "id": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
+                      "type": [
+                        "string",
+                        "null"
                       ]
                     },
                     "event": {
                       "type": "string"
                     },
                     "data": {
-                      "type": "string",
-                      "contentMediaType": "application/json"
+                      "$ref": "#/components/schemas/ChatStreamEventEncoded"
                     }
                   },
                   "required": [
@@ -1124,13 +392,9 @@
                               ]
                             },
                             "fiberId": {
-                              "anyOf": [
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "null"
-                                }
+                              "type": [
+                                "number",
+                                "null"
                               ]
                             }
                           },
@@ -1178,17 +442,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "text": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": [
-                  "text"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/SendMessage"
               }
             }
           },
@@ -1207,25 +461,13 @@
             "name": "status",
             "in": "query",
             "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "inbox",
-                      "next",
-                      "scheduled",
-                      "waiting",
-                      "done",
-                      "dropped"
-                    ]
-                  }
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "$ref": "#/components/schemas/TaskStatus"
+              }
             },
             "required": false
           }
@@ -1239,149 +481,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "title": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "notes": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "inbox",
-                          "next",
-                          "scheduled",
-                          "waiting",
-                          "done",
-                          "dropped"
-                        ]
-                      },
-                      "due": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "scheduledFor": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "effort": {
-                        "anyOf": [
-                          {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 5
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "energyKind": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "enum": [
-                              "focus",
-                              "admin",
-                              "physical",
-                              "social",
-                              "rest"
-                            ]
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "area": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "source": {
-                        "type": "string",
-                        "enum": [
-                          "user",
-                          "agent",
-                          "import",
-                          "integration"
-                        ]
-                      },
-                      "parentId": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "completedAt": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "createdAt": {
-                        "type": "string"
-                      },
-                      "updatedAt": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "title",
-                      "notes",
-                      "status",
-                      "due",
-                      "scheduledFor",
-                      "effort",
-                      "energyKind",
-                      "area",
-                      "source",
-                      "parentId",
-                      "completedAt",
-                      "createdAt",
-                      "updatedAt"
-                    ],
-                    "additionalProperties": false,
-                    "title": "Task.json"
+                    "$ref": "#/components/schemas/Task"
                   }
                 }
               }
@@ -1410,153 +510,11 @@
         "security": [],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Task",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "title": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "notes": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "inbox",
-                        "next",
-                        "scheduled",
-                        "waiting",
-                        "done",
-                        "dropped"
-                      ]
-                    },
-                    "due": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "scheduledFor": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "effort": {
-                      "anyOf": [
-                        {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 5
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "energyKind": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "enum": [
-                            "focus",
-                            "admin",
-                            "physical",
-                            "social",
-                            "rest"
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "area": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "source": {
-                      "type": "string",
-                      "enum": [
-                        "user",
-                        "agent",
-                        "import",
-                        "integration"
-                      ]
-                    },
-                    "parentId": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "completedAt": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    },
-                    "updatedAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "title",
-                    "notes",
-                    "status",
-                    "due",
-                    "scheduledFor",
-                    "effort",
-                    "energyKind",
-                    "area",
-                    "source",
-                    "parentId",
-                    "completedAt",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "additionalProperties": false,
-                  "title": "Task.json"
+                  "$ref": "#/components/schemas/Task"
                 }
               }
             }
@@ -1578,117 +536,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "notes": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "inbox",
-                      "next",
-                      "scheduled",
-                      "waiting",
-                      "done",
-                      "dropped"
-                    ]
-                  },
-                  "due": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "scheduledFor": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "effort": {
-                    "anyOf": [
-                      {
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 5
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "energyKind": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "enum": [
-                          "focus",
-                          "admin",
-                          "physical",
-                          "social",
-                          "rest"
-                        ]
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "area": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "source": {
-                    "type": "string",
-                    "enum": [
-                      "user",
-                      "agent",
-                      "import",
-                      "integration"
-                    ]
-                  },
-                  "parentId": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "title"
-                ],
-                "additionalProperties": false,
-                "title": "Task.jsonCreate"
+                "$ref": "#/components/schemas/TaskCreate"
               }
             }
           },
@@ -1715,153 +563,11 @@
         "security": [],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Task",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "title": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "notes": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "inbox",
-                        "next",
-                        "scheduled",
-                        "waiting",
-                        "done",
-                        "dropped"
-                      ]
-                    },
-                    "due": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "scheduledFor": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "effort": {
-                      "anyOf": [
-                        {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 5
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "energyKind": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "enum": [
-                            "focus",
-                            "admin",
-                            "physical",
-                            "social",
-                            "rest"
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "area": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "source": {
-                      "type": "string",
-                      "enum": [
-                        "user",
-                        "agent",
-                        "import",
-                        "integration"
-                      ]
-                    },
-                    "parentId": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "completedAt": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    },
-                    "updatedAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "title",
-                    "notes",
-                    "status",
-                    "due",
-                    "scheduledFor",
-                    "effort",
-                    "energyKind",
-                    "area",
-                    "source",
-                    "parentId",
-                    "completedAt",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "additionalProperties": false,
-                  "title": "Task.json"
+                  "$ref": "#/components/schemas/Task"
                 }
               }
             }
@@ -1908,153 +614,11 @@
         "security": [],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Task",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "title": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "notes": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "inbox",
-                        "next",
-                        "scheduled",
-                        "waiting",
-                        "done",
-                        "dropped"
-                      ]
-                    },
-                    "due": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "scheduledFor": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "effort": {
-                      "anyOf": [
-                        {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 5
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "energyKind": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "enum": [
-                            "focus",
-                            "admin",
-                            "physical",
-                            "social",
-                            "rest"
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "area": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "source": {
-                      "type": "string",
-                      "enum": [
-                        "user",
-                        "agent",
-                        "import",
-                        "integration"
-                      ]
-                    },
-                    "parentId": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "completedAt": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    },
-                    "updatedAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "title",
-                    "notes",
-                    "status",
-                    "due",
-                    "scheduledFor",
-                    "effort",
-                    "energyKind",
-                    "area",
-                    "source",
-                    "parentId",
-                    "completedAt",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "additionalProperties": false,
-                  "title": "Task.json"
+                  "$ref": "#/components/schemas/Task"
                 }
               }
             }
@@ -2086,114 +650,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "notes": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "inbox",
-                      "next",
-                      "scheduled",
-                      "waiting",
-                      "done",
-                      "dropped"
-                    ]
-                  },
-                  "due": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "scheduledFor": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "effort": {
-                    "anyOf": [
-                      {
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 5
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "energyKind": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "enum": [
-                          "focus",
-                          "admin",
-                          "physical",
-                          "social",
-                          "rest"
-                        ]
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "area": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "source": {
-                    "type": "string",
-                    "enum": [
-                      "user",
-                      "agent",
-                      "import",
-                      "integration"
-                    ]
-                  },
-                  "parentId": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                },
-                "additionalProperties": false,
-                "title": "Task.jsonUpdate"
+                "$ref": "#/components/schemas/TaskUpdate"
               }
             }
           },
@@ -2264,153 +721,11 @@
         "security": [],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Task",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "title": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "notes": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "inbox",
-                        "next",
-                        "scheduled",
-                        "waiting",
-                        "done",
-                        "dropped"
-                      ]
-                    },
-                    "due": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "scheduledFor": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "effort": {
-                      "anyOf": [
-                        {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 5
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "energyKind": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "enum": [
-                            "focus",
-                            "admin",
-                            "physical",
-                            "social",
-                            "rest"
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "area": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "source": {
-                      "type": "string",
-                      "enum": [
-                        "user",
-                        "agent",
-                        "import",
-                        "integration"
-                      ]
-                    },
-                    "parentId": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "completedAt": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    },
-                    "updatedAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "title",
-                    "notes",
-                    "status",
-                    "due",
-                    "scheduledFor",
-                    "effort",
-                    "energyKind",
-                    "area",
-                    "source",
-                    "parentId",
-                    "completedAt",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "additionalProperties": false,
-                  "title": "Task.json"
+                  "$ref": "#/components/schemas/Task"
                 }
               }
             }
@@ -2439,6 +754,393 @@
         "description": "Sets `status` to `done` and stamps `completedAt`.",
         "summary": "Complete a task"
       }
+    },
+    "/api/captures": {
+      "post": {
+        "tags": [
+          "Captures"
+        ],
+        "operationId": "captures.create",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Capture",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capture"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Stores raw input for triage. `payload` is free-form JSON; by convention text is `{ text }`, a shared link `{ url, title?, text? }`, an image `{ dataUrl, width, height, caption? }` (ADR 0019).",
+        "summary": "File a capture",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaptureCreate"
+              }
+            }
+          },
+          "required": true
+        }
+      },
+      "get": {
+        "tags": [
+          "Captures"
+        ],
+        "operationId": "captures.list",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "$ref": "#/components/schemas/CaptureStatus"
+              }
+            },
+            "required": false
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Capture"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Captures in creation order, optionally filtered by status (`?status=new`).",
+        "summary": "List captures"
+      }
+    },
+    "/api/captures/{id}": {
+      "get": {
+        "tags": [
+          "Captures"
+        ],
+        "operationId": "captures.get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Capture",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capture"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CaptureNotFound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptureNotFoundEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "One capture by id.",
+        "summary": "Get a capture"
+      },
+      "patch": {
+        "tags": [
+          "Captures"
+        ],
+        "operationId": "captures.update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Capture",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capture"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CaptureNotFound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptureNotFoundEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Partial update of `status`, `routedTo` and `transcript`; `kind` and `payload` never change.",
+        "summary": "Triage a capture",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaptureUpdate"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/events": {
+      "post": {
+        "tags": [
+          "Events"
+        ],
+        "operationId": "events.ingest",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "IngestResult",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidEventSource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidEventSourceEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Appends an event from a client (e.g. `source: healthkit`, `type: daily_summary`). With a `dedupeKey` the call is idempotent: a repeat answers `Duplicate` and writes nothing. The sources `domain` and `system` are reserved for the server.",
+        "summary": "Ingest an event",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventIngest"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/devices": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "devices.register",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Device",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Device"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Stores the device's APNs token. Registering the same token again updates name, version and environment instead of adding a row. The token is never returned.",
+        "summary": "Register a device for push",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRegister"
+              }
+            }
+          },
+          "required": true
+        }
+      },
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "devices.list",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Device"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Registered devices, oldest first.",
+        "summary": "List devices"
+      }
+    },
+    "/api/devices/{id}": {
+      "delete": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "devices.remove",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "<No Content>"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "DeviceNotFound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceNotFoundEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Removes the registration. Responds 204 with no body.",
+        "summary": "Forget a device"
+      }
     }
   },
   "components": {
@@ -2462,6 +1164,388 @@
         ],
         "additionalProperties": false
       },
+      "DeviceNotFoundEncoded": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "DeviceNotFound"
+            ]
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_tag",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/DevicePlatform"
+          },
+          "pushEnvironment": {
+            "$ref": "#/components/schemas/PushEnvironment"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "appVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "platform",
+          "pushEnvironment",
+          "name",
+          "appVersion",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "title": "Device.json"
+      },
+      "PushEnvironment": {
+        "type": "string",
+        "enum": [
+          "sandbox",
+          "production"
+        ]
+      },
+      "DevicePlatform": {
+        "type": "string",
+        "enum": [
+          "ios"
+        ]
+      },
+      "DeviceRegister": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "$ref": "#/components/schemas/DevicePlatform"
+          },
+          "pushToken": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pushEnvironment": {
+            "$ref": "#/components/schemas/PushEnvironment"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "appVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "platform",
+          "pushToken",
+          "pushEnvironment"
+        ],
+        "additionalProperties": false,
+        "title": "Device.jsonCreate"
+      },
+      "InvalidEventSourceEncoded": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "InvalidEventSource"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_tag",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "IngestResult": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/EventInserted"
+          },
+          {
+            "$ref": "#/components/schemas/EventDuplicate"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "_tag",
+          "mapping": {
+            "Inserted": "#/components/schemas/EventInserted",
+            "Duplicate": "#/components/schemas/EventDuplicate"
+          }
+        }
+      },
+      "EventDuplicate": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "Duplicate"
+            ]
+          },
+          "dedupeKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_tag",
+          "dedupeKey"
+        ],
+        "additionalProperties": false
+      },
+      "EventInserted": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "Inserted"
+            ]
+          },
+          "event": {
+            "$ref": "#/components/schemas/Event"
+          }
+        },
+        "required": [
+          "_tag",
+          "event"
+        ],
+        "additionalProperties": false
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string"
+          },
+          "payload": {},
+          "dedupeKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "type",
+          "occurredAt",
+          "payload",
+          "dedupeKey",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "title": "Event.json"
+      },
+      "EventIngest": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string"
+          },
+          "payload": {},
+          "dedupeKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "source",
+          "type",
+          "occurredAt",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "CaptureNotFoundEncoded": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "CaptureNotFound"
+            ]
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_tag",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "Capture": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CaptureKind"
+          },
+          "payload": {},
+          "transcript": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaptureStatus"
+          },
+          "routedTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "payload",
+          "transcript",
+          "status",
+          "routedTo",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "title": "Capture.json"
+      },
+      "CaptureStatus": {
+        "type": "string",
+        "enum": [
+          "new",
+          "routed",
+          "dismissed"
+        ]
+      },
+      "CaptureKind": {
+        "type": "string",
+        "enum": [
+          "text",
+          "voice",
+          "share",
+          "image"
+        ]
+      },
+      "CaptureUpdate": {
+        "type": "object",
+        "properties": {
+          "transcript": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaptureStatus"
+          },
+          "routedTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "title": "Capture.jsonUpdate"
+      },
+      "CaptureCreate": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/CaptureKind"
+          },
+          "payload": {},
+          "transcript": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaptureStatus"
+          },
+          "routedTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "payload"
+        ],
+        "additionalProperties": false,
+        "title": "Capture.jsonCreate"
+      },
       "TaskNotFoundEncoded": {
         "type": "object",
         "properties": {
@@ -2481,6 +1565,277 @@
         ],
         "additionalProperties": false
       },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "due": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scheduledFor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effort": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5
+          },
+          "energyKind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "focus",
+              "admin",
+              "physical",
+              "social",
+              "rest",
+              null
+            ]
+          },
+          "area": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "$ref": "#/components/schemas/TaskSource"
+          },
+          "parentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "notes",
+          "status",
+          "due",
+          "scheduledFor",
+          "effort",
+          "energyKind",
+          "area",
+          "source",
+          "parentId",
+          "completedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "title": "Task.json"
+      },
+      "TaskSource": {
+        "type": "string",
+        "enum": [
+          "user",
+          "agent",
+          "import",
+          "integration"
+        ]
+      },
+      "EnergyKind": {
+        "type": "string",
+        "enum": [
+          "focus",
+          "admin",
+          "physical",
+          "social",
+          "rest"
+        ]
+      },
+      "TaskStatus": {
+        "type": "string",
+        "enum": [
+          "inbox",
+          "next",
+          "scheduled",
+          "waiting",
+          "done",
+          "dropped"
+        ]
+      },
+      "TaskUpdate": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "due": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scheduledFor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effort": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5
+          },
+          "energyKind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "focus",
+              "admin",
+              "physical",
+              "social",
+              "rest",
+              null
+            ]
+          },
+          "area": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "$ref": "#/components/schemas/TaskSource"
+          },
+          "parentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "title": "Task.jsonUpdate"
+      },
+      "TaskCreate": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "due": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scheduledFor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effort": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5
+          },
+          "energyKind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "focus",
+              "admin",
+              "physical",
+              "social",
+              "rest",
+              null
+            ]
+          },
+          "area": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "$ref": "#/components/schemas/TaskSource"
+          },
+          "parentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false,
+        "title": "Task.jsonCreate"
+      },
       "ThreadNotFoundEncoded": {
         "type": "object",
         "properties": {
@@ -2499,6 +1854,792 @@
           "id"
         ],
         "additionalProperties": false
+      },
+      "ChatStreamEventEncoded": {
+        "type": "string",
+        "contentMediaType": "application/json",
+        "contentSchema": {
+          "$ref": "#/components/schemas/ChatStreamEvent"
+        }
+      },
+      "SendMessage": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "threadId": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/MessageRole"
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessagePart"
+            }
+          },
+          "runId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "traceId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "threadId",
+          "role",
+          "parts",
+          "runId",
+          "traceId",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "title": "Message.json"
+      },
+      "MessagePart": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TextPart"
+          },
+          {
+            "$ref": "#/components/schemas/ImagePart"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallPart"
+          },
+          {
+            "$ref": "#/components/schemas/ToolResultPart"
+          },
+          {
+            "$ref": "#/components/schemas/UiComponentPart"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "text": "#/components/schemas/TextPart",
+            "image": "#/components/schemas/ImagePart",
+            "tool_call": "#/components/schemas/ToolCallPart",
+            "tool_result": "#/components/schemas/ToolResultPart",
+            "ui_component": "#/components/schemas/UiComponentPart"
+          }
+        }
+      },
+      "UiComponentPart": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "ui_component"
+            ]
+          },
+          "component": {
+            "$ref": "#/components/schemas/UiComponent"
+          }
+        },
+        "required": [
+          "type",
+          "component"
+        ],
+        "additionalProperties": false
+      },
+      "UiComponent": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/OptionPicker"
+          },
+          {
+            "$ref": "#/components/schemas/TaskCard"
+          },
+          {
+            "$ref": "#/components/schemas/Confirm"
+          },
+          {
+            "$ref": "#/components/schemas/SnoozePicker"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "option_picker": "#/components/schemas/OptionPicker",
+            "task_card": "#/components/schemas/TaskCard",
+            "confirm": "#/components/schemas/Confirm",
+            "snooze_picker": "#/components/schemas/SnoozePicker"
+          }
+        }
+      },
+      "SnoozePicker": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "snooze_picker"
+            ]
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SnoozeChoice"
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "prompt",
+          "choices"
+        ],
+        "additionalProperties": false
+      },
+      "SnoozeChoice": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "until": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "until"
+        ],
+        "additionalProperties": false
+      },
+      "Confirm": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "confirm"
+            ]
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "confirmLabel": {
+            "type": "string"
+          },
+          "cancelLabel": {
+            "type": "string"
+          },
+          "action": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "args": {}
+            },
+            "required": [
+              "name",
+              "args"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "kind",
+          "prompt",
+          "confirmLabel",
+          "cancelLabel",
+          "action"
+        ],
+        "additionalProperties": false
+      },
+      "TaskCard": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "task_card"
+            ]
+          },
+          "taskId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "due": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "taskId",
+          "title",
+          "status",
+          "due"
+        ],
+        "additionalProperties": false
+      },
+      "OptionPicker": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "option_picker"
+            ]
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UiOption"
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "prompt",
+          "options"
+        ],
+        "additionalProperties": false
+      },
+      "UiOption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "additionalProperties": false
+      },
+      "ToolResultPart": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "tool_result"
+            ]
+          },
+          "toolCallId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "result": {}
+        },
+        "required": [
+          "type",
+          "toolCallId",
+          "name",
+          "ok",
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "ToolCallPart": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "tool_call"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "args": {}
+        },
+        "required": [
+          "type",
+          "id",
+          "name",
+          "args"
+        ],
+        "additionalProperties": false
+      },
+      "ImagePart": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "image"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "alt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "TextPart": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "text"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "MessageRole": {
+        "type": "string",
+        "enum": [
+          "user",
+          "assistant",
+          "system",
+          "tool"
+        ]
+      },
+      "Thread": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ThreadKind"
+          },
+          "parentThreadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "topic": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contextScope": {
+            "$ref": "#/components/schemas/ContextScope"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ThreadStatus"
+          },
+          "lastMessageAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "parentThreadId",
+          "topic",
+          "contextScope",
+          "status",
+          "lastMessageAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "title": "Thread.json"
+      },
+      "ThreadStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "archived"
+        ]
+      },
+      "ContextScope": {
+        "type": "string",
+        "enum": [
+          "full",
+          "minimal"
+        ]
+      },
+      "ThreadKind": {
+        "type": "string",
+        "enum": [
+          "main",
+          "side",
+          "quest"
+        ]
+      },
+      "ThreadCreate": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "side",
+              "quest"
+            ]
+          },
+          "parentThreadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "topic": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contextScope": {
+            "$ref": "#/components/schemas/ContextScope"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ThreadStatus"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "AuthUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "HealthStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "service": {
+            "type": "string",
+            "enum": [
+              "bloom-server"
+            ]
+          },
+          "time": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "service",
+          "time"
+        ],
+        "additionalProperties": false
+      },
+      "MessageStartEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "message_start"
+            ]
+          },
+          "messageId": {
+            "type": "string"
+          },
+          "threadId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "messageId",
+          "threadId"
+        ],
+        "additionalProperties": false
+      },
+      "TextDeltaEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "text_delta"
+            ]
+          },
+          "messageId": {
+            "type": "string"
+          },
+          "delta": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "messageId",
+          "delta"
+        ],
+        "additionalProperties": false
+      },
+      "ToolCallEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "tool_call"
+            ]
+          },
+          "messageId": {
+            "type": "string"
+          },
+          "toolCallId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "args": {}
+        },
+        "required": [
+          "type",
+          "messageId",
+          "toolCallId",
+          "name",
+          "args"
+        ],
+        "additionalProperties": false
+      },
+      "ToolResultEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "tool_result"
+            ]
+          },
+          "messageId": {
+            "type": "string"
+          },
+          "toolCallId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "messageId",
+          "toolCallId",
+          "name",
+          "ok"
+        ],
+        "additionalProperties": false
+      },
+      "UiComponentEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "ui_component"
+            ]
+          },
+          "messageId": {
+            "type": "string"
+          },
+          "component": {
+            "$ref": "#/components/schemas/UiComponent"
+          }
+        },
+        "required": [
+          "type",
+          "messageId",
+          "component"
+        ],
+        "additionalProperties": false
+      },
+      "TasksChangedEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "tasks_changed"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "MessageEndEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "message_end"
+            ]
+          },
+          "message": {
+            "$ref": "#/components/schemas/Message"
+          }
+        },
+        "required": [
+          "type",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "StreamErrorEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "error"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "ChatStreamEvent": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/MessageStartEvent"
+          },
+          {
+            "$ref": "#/components/schemas/TextDeltaEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolResultEvent"
+          },
+          {
+            "$ref": "#/components/schemas/UiComponentEvent"
+          },
+          {
+            "$ref": "#/components/schemas/TasksChangedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/MessageEndEvent"
+          },
+          {
+            "$ref": "#/components/schemas/StreamErrorEvent"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "message_start": "#/components/schemas/MessageStartEvent",
+            "text_delta": "#/components/schemas/TextDeltaEvent",
+            "tool_call": "#/components/schemas/ToolCallEvent",
+            "tool_result": "#/components/schemas/ToolResultEvent",
+            "ui_component": "#/components/schemas/UiComponentEvent",
+            "tasks_changed": "#/components/schemas/TasksChangedEvent",
+            "message_end": "#/components/schemas/MessageEndEvent",
+            "error": "#/components/schemas/StreamErrorEvent"
+          }
+        }
       }
     },
     "securitySchemes": {}
@@ -2524,6 +2665,18 @@
     {
       "name": "Tasks",
       "description": "Things to do once: the central domain object."
+    },
+    {
+      "name": "Captures",
+      "description": "Raw input (text, voice, share, image) waiting for triage."
+    },
+    {
+      "name": "Events",
+      "description": "Things that happened that Bloom might care about, sent by clients."
+    },
+    {
+      "name": "Devices",
+      "description": "Phones registered for push notifications."
     }
   ]
 }

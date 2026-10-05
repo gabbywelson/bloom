@@ -1,4 +1,4 @@
-import { Message, Thread, ThreadId } from "@bloom/domain";
+import { MessageJson, Thread, ThreadId, ThreadJson } from "@bloom/domain";
 import { Schema, Struct } from "effect";
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api";
 import { Authorization } from "../auth.ts";
@@ -21,13 +21,13 @@ export type CreatableThreadKind = typeof CreatableThreadKind.Type;
  */
 export const ThreadCreateInput = Schema.toEncoded(
   Thread.jsonCreate.mapFields(Struct.assign({ kind: CreatableThreadKind })),
-);
+).annotate({ identifier: "ThreadCreate" });
 export type ThreadCreateInput = typeof ThreadCreateInput.Type;
 
 /** Conversation threads and their message history. All endpoints require `Authorization`. */
 export class ThreadsGroup extends HttpApiGroup.make("threads")
   .add(
-    HttpApiEndpoint.get("list", "/", { success: Schema.Array(Thread.json) }).annotateMerge(
+    HttpApiEndpoint.get("list", "/", { success: Schema.Array(ThreadJson) }).annotateMerge(
       OpenApi.annotations({
         summary: "List threads",
         description: "All threads in creation order.",
@@ -35,7 +35,7 @@ export class ThreadsGroup extends HttpApiGroup.make("threads")
     ),
     HttpApiEndpoint.post("create", "/", {
       payload: ThreadCreateInput,
-      success: Thread.json,
+      success: ThreadJson,
     }).annotateMerge(
       OpenApi.annotations({
         summary: "Create a side thread or quest",
@@ -43,7 +43,7 @@ export class ThreadsGroup extends HttpApiGroup.make("threads")
           "Creates a `side` or `quest` thread; the `main` thread cannot be created here (see `GET /api/threads/main`). When `contextScope` is omitted, side threads get `minimal` and quests get `full`.",
       }),
     ),
-    HttpApiEndpoint.get("main", "/main", { success: Thread.json }).annotateMerge(
+    HttpApiEndpoint.get("main", "/main", { success: ThreadJson }).annotateMerge(
       OpenApi.annotations({
         summary: "Get the main thread",
         description:
@@ -52,7 +52,7 @@ export class ThreadsGroup extends HttpApiGroup.make("threads")
     ),
     HttpApiEndpoint.get("get", "/:id", {
       params: { id: ThreadId },
-      success: Thread.json,
+      success: ThreadJson,
       error: ThreadNotFound404,
     }).annotateMerge(
       OpenApi.annotations({
@@ -63,7 +63,7 @@ export class ThreadsGroup extends HttpApiGroup.make("threads")
     HttpApiEndpoint.get("messages", "/:id/messages", {
       params: { id: ThreadId },
       query: MessageListQuery,
-      success: Schema.Array(Message.json),
+      success: Schema.Array(MessageJson),
       error: ThreadNotFound404,
     }).annotateMerge(
       OpenApi.annotations({

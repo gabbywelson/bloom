@@ -28,7 +28,10 @@
     "start:server": "bun run apps/server/src/main.ts",
     "infra:up:langfuse": "docker compose --profile langfuse up -d",
     "e2e": "bash scripts/e2e.sh",
-    "test:verbose": "VERBOSE=1 bash scripts/test-all.sh"
+    "test:verbose": "VERBOSE=1 bash scripts/test-all.sh",
+    "ios:generate": "bash scripts/ios.sh generate",
+    "ios:build": "bash scripts/ios.sh build",
+    "ios:test": "bash scripts/ios.sh test"
   },
   "devDependencies": {
     "@effect/tsgo": "^0.48.0",

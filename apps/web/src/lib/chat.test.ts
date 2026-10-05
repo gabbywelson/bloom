@@ -40,6 +40,7 @@ const persisted = Schema.decodeSync(Message.json)({
     { type: "text", text: "Done. I added it for tomorrow." },
   ],
   runId: null,
+  traceId: "4bf92f3577b34da6a3ce929d0e0e4736",
   createdAt: "2026-10-04T09:00:02Z",
 });
 

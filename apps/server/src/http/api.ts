@@ -7,6 +7,9 @@ import { BloomApi } from "@bloom/api";
 import { Layer } from "effect";
 import { HttpApiBuilder, HttpApiScalar } from "effect/http-api";
 import { AuthorizationLive } from "../auth/authorization.ts";
+import { CapturesLive } from "./groups/captures.ts";
+import { DevicesLive } from "./groups/devices.ts";
+import { EventsLive } from "./groups/events.ts";
 import { HealthLive } from "./groups/health.ts";
 import { MeLive } from "./groups/me.ts";
 import { MessagesLive } from "./groups/messages.ts";
@@ -16,13 +19,16 @@ import { ThreadsLive } from "./groups/threads.ts";
 export const OPENAPI_PATH = "/api/openapi.json";
 export const DOCS_PATH = "/api/docs";
 
-/** All five groups; `Authorization` is merged in because the HTTP pipeline resolves it when the routes are built. */
+/** Every group; `Authorization` is merged in because the HTTP pipeline resolves it when the routes are built. */
 export const GroupsLive = Layer.mergeAll(
   HealthLive,
   MeLive,
   ThreadsLive,
   MessagesLive,
   TasksLive,
+  CapturesLive,
+  EventsLive,
+  DevicesLive,
 ).pipe(Layer.provideMerge(AuthorizationLive));
 
 /** The API routes plus `GET /api/openapi.json`. */

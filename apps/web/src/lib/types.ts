@@ -4,6 +4,7 @@
  * are defined here.
  */
 import type {
+  Capture,
   Confirm,
   Message,
   MessagePart,
@@ -17,6 +18,7 @@ import type {
 import type { DateTime } from "effect";
 
 export type {
+  CaptureId,
   ChatStreamEvent,
   Confirm,
   Message,
@@ -37,6 +39,7 @@ export type {
 
 /** Wire shapes of the entities as the client receives them (timestamps are `DateTime.Utc`). */
 export type TaskJson = typeof Task.json.Type;
+export type CaptureJson = typeof Capture.json.Type;
 export type ThreadJson = typeof Thread.json.Type;
 export type MessageJson = typeof Message.json.Type;
 
@@ -51,6 +54,8 @@ export interface ChatMessage {
   readonly role: MessageRole;
   readonly parts: ReadonlyArray<MessagePart>;
   readonly createdAt: DateTime.Utc;
+  /** The run's trace, once the message is persisted (ADR 0024). */
+  readonly traceId?: string | null;
 }
 
 /** Narrows a persisted message to the shape the view needs (an identity at runtime). */

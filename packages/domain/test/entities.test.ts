@@ -264,6 +264,7 @@ describe("Message", () => {
       role: "user",
       parts: [{ type: "text", text: "hi" }],
       runId: null,
+      traceId: null,
     });
   });
 

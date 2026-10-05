@@ -31,3 +31,7 @@ export type CaptureId = typeof CaptureId.Type;
 /** Branded id of an agent run (one model invocation loop). */
 export const RunId = Schema.String.pipe(Schema.brand("RunId"));
 export type RunId = typeof RunId.Type;
+
+/** Branded id of a registered `Device`. */
+export const DeviceId = Schema.String.pipe(Schema.brand("DeviceId"));
+export type DeviceId = typeof DeviceId.Type;

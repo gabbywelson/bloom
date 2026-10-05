@@ -21,8 +21,12 @@ export default defineConfig({
   server: {
     // Dev only: the browser talks to one origin. /api (including /api/auth) is
     // proxied to the Bun server so cookies and passkeys bind to the web origin.
+    // BLOOM_API_PROXY points it at a server on another port (scripts/e2e.sh).
     proxy: {
-      "/api": { target: "http://localhost:3000", changeOrigin: false },
+      "/api": {
+        target: process.env["BLOOM_API_PROXY"] ?? "http://localhost:3000",
+        changeOrigin: false,
+      },
     },
   },
 });

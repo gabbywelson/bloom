@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { TaskId, ThreadId } from "@bloom/domain";
+import { CaptureId, TaskId, ThreadId } from "@bloom/domain";
 import { Cause, DateTime, Effect, Exit, Layer, Schema, Stream } from "effect";
 import { HttpClient, HttpClientResponse, HttpServer, HttpServerRespondable } from "effect/http";
 import { HttpApiError, HttpApiTest } from "effect/http-api";
@@ -11,7 +11,16 @@ import { AuthorizationAllow, AuthorizationReject, fixedUser, TestHandlers } from
 const taskId = Schema.decodeSync(TaskId);
 const threadId = Schema.decodeSync(ThreadId);
 
-const makeClient = HttpApiTest.groups(BloomApi, ["health", "me", "threads", "messages", "tasks"]);
+const makeClient = HttpApiTest.groups(BloomApi, [
+  "health",
+  "me",
+  "threads",
+  "messages",
+  "tasks",
+  "captures",
+  "events",
+  "devices",
+]);
 
 type Client = Effect.Success<typeof makeClient>;
 
@@ -392,6 +401,121 @@ describe("client", () => {
         const health = yield* client.health.check();
         expect(health.status).toBe("ok");
         expect(urls).toEqual(["http://bloom.test/api/health"]);
+      }),
+    ));
+});
+
+describe("captures", () => {
+  it("files captures with only kind and payload, lists by status and triages", () =>
+    run((client) =>
+      Effect.gen(function* () {
+        const link = yield* client.captures.create({
+          payload: { kind: "share", payload: { url: "https://example.com/a", title: "A" } },
+        });
+        expect(link.status).toBe("new");
+        expect(link.transcript).toBeNull();
+        expect(link.payload).toEqual({ url: "https://example.com/a", title: "A" });
+        const note = yield* client.captures.create({
+          payload: { kind: "text", payload: { text: "Buy stamps" } },
+        });
+
+        expect((yield* client.captures.list({ query: {} })).map((c) => c.id)).toEqual([
+          link.id,
+          note.id,
+        ]);
+        const dismissed = yield* client.captures.update({
+          params: { id: note.id },
+          payload: { status: "dismissed" },
+        });
+        expect(dismissed.status).toBe("dismissed");
+        expect(dismissed.payload).toEqual({ text: "Buy stamps" });
+
+        const fresh = yield* client.captures.list({ query: { status: ["new"] } });
+        expect(fresh.map((c) => c.id)).toEqual([link.id]);
+        expect((yield* client.captures.get({ params: { id: link.id } })).kind).toBe("share");
+      }),
+    ));
+
+  it("answers CaptureNotFound (404) for unknown ids", () =>
+    run((client) =>
+      Effect.gen(function* () {
+        const id = Schema.decodeSync(CaptureId)("019a0000-0000-7000-8000-00000000dead");
+        const error = yield* Effect.flip(client.captures.get({ params: { id } }));
+        expect(error._tag).toBe("CaptureNotFound");
+        const patchError = yield* Effect.flip(
+          client.captures.update({ params: { id }, payload: { status: "routed" } }),
+        );
+        expect(patchError._tag).toBe("CaptureNotFound");
+      }),
+    ));
+
+  it("requires authorization", () =>
+    run(
+      (client) =>
+        Effect.gen(function* () {
+          const error = yield* Effect.flip(client.captures.list({ query: {} }));
+          expect(error._tag).toBe("Unauthorized");
+        }),
+      AuthorizationReject,
+    ));
+});
+
+describe("events", () => {
+  const summary = {
+    source: "healthkit",
+    type: "daily_summary",
+    occurredAt: "2026-10-04T07:00:00.000Z",
+    payload: { day: "2026-10-04", steps: 8123 },
+    dedupeKey: "healthkit:2026-10-04",
+  };
+
+  it("ingests once per dedupeKey and answers Duplicate after", () =>
+    run((client) =>
+      Effect.gen(function* () {
+        const first = yield* client.events.ingest({ payload: summary });
+        expect(first._tag).toBe("Inserted");
+        if (first._tag === "Inserted") {
+          expect(first.event.source).toBe("healthkit");
+          expect(first.event.dedupeKey).toBe("healthkit:2026-10-04");
+          expect(first.event.payload).toEqual({ day: "2026-10-04", steps: 8123 });
+        }
+        const again = yield* client.events.ingest({ payload: summary });
+        expect(again).toEqual({ _tag: "Duplicate", dedupeKey: "healthkit:2026-10-04" });
+      }),
+    ));
+
+  it("refuses the server's own sources", () =>
+    run((client) =>
+      Effect.gen(function* () {
+        const error = yield* Effect.flip(
+          client.events.ingest({ payload: { ...summary, source: "domain" } }),
+        );
+        expect(error._tag).toBe("InvalidEventSource");
+      }),
+    ));
+});
+
+describe("devices", () => {
+  it("registers once per token, never returns the token, lists and removes", () =>
+    run((client) =>
+      Effect.gen(function* () {
+        const payload = {
+          platform: "ios",
+          pushToken: "tok-1",
+          pushEnvironment: "sandbox",
+        } as const;
+        const device = yield* client.devices.register({ payload });
+        expect(Object.keys(device)).not.toContain("pushToken");
+        const again = yield* client.devices.register({
+          payload: { ...payload, name: "iPhone", appVersion: "0.1.0 (1)" },
+        });
+        expect(again.id).toBe(device.id);
+        expect(again.name).toBe("iPhone");
+        expect((yield* client.devices.list()).map((d) => d.id)).toEqual([device.id]);
+        yield* client.devices.remove({ params: { id: device.id } });
+        expect(yield* client.devices.list()).toEqual([]);
+        const error = yield* Effect.flip(client.devices.remove({ params: { id: device.id } }));
+        expect(error._tag).toBe("DeviceNotFound");
       }),
     ));
 });
