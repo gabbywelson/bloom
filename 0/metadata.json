@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M45C3KM220B4FTHDN0JTC49K",
+  "session_id": "deb2819b-92b1-4621-ae7f-e92eb0e632ea",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-05T06:30:38.290748Z",
+  "branch": "t3code/ios-client-skeleton-and-chat",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/ios/Bloom/Features/Intents/CaptureIntent.swift",
+    "apps/ios/BloomKit/Capture/TaskSnapshot.swift",
+    "apps/ios/BloomTests/TaskSnapshotTests.swift",
+    "apps/ios/BloomWidgets/BloomWidgets.swift",
+    "apps/ios/BloomWidgets/TasksWidget.swift",
+    "docs/adrs/0022-ios-quick-capture-surfaces.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "d8d6bc80d77b",
+  "checkpoint_transcript_start": 2344,
+  "transcript_lines_at_start": 2344,
+  "compact_transcript_start": 390,
+  "token_usage": {
+    "input_tokens": 42,
+    "cache_creation_tokens": 30935,
+    "cache_read_tokens": 14831025,
+    "output_tokens": 22973,
+    "api_call_count": 21
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-05T06:30:37.99865Z",
+    "agent_lines": 425,
+    "agent_removed": 0,
+    "human_added": 168,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 593,
+    "total_lines_changed": 600,
+    "agent_percentage": 70.83333333333334,
+    "metric_version": 2
+  }
+}
