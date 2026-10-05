@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M459RTRW1J0H4W67EE15MRCT",
+  "strategy": "manual-commit",
+  "branch": "t3code/ios-client-skeleton-and-chat",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/ios/Bloom/App/Workspace.swift",
+    "apps/ios/Bloom/Features/Chat/ChatModel.swift",
+    "apps/ios/Bloom/Features/Chat/ChatView.swift",
+    "apps/ios/Bloom/Features/Chat/MessageRow.swift",
+    "apps/ios/Bloom/Features/Chat/UiComponentView.swift",
+    "apps/ios/Bloom/Features/Home/HomeView.swift",
+    "apps/ios/Bloom/Features/Tasks/TasksModel.swift",
+    "apps/ios/BloomKit/Chat/ChatTranscript.swift",
+    "apps/ios/BloomKit/Design/DateLabels.swift",
+    "apps/ios/BloomTests/ChatTranscriptTests.swift",
+    "apps/ios/BloomTests/DateLabelsTests.swift"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 54,
+    "cache_creation_tokens": 45554,
+    "cache_read_tokens": 13182363,
+    "output_tokens": 29525,
+    "api_call_count": 27
+  }
+}
